@@ -16,6 +16,8 @@ HDF5_PATH  = ${OLCF_HDF5_ROOT}
 HYPRE_PATH = ${OLCF_HYPRE_ROOT}
 CUDA_PATH  = ${OLCF_CUDA_ROOT}
 MAGMA_PATH = ${OLCF_MAGMA_ROOT}
+SZ_PATH    = /gpfs/alpine/csc300/world-shared/gnu_build/SZ/install
+ZFP_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/zfp/
 
 ZLIB_PATH  =
 
@@ -88,13 +90,15 @@ PP    = -D
 OPENMP = -fopenmp
 
 FFLAGS_AMREX = -I${AMREX_PATH}/include
-FFLAGS_HDF5  = -I${HDF5_PATH}/include ${MDEFS}${PP}H5_USE_18_API
+FFLAGS_HDF5  = -I${HDF5_PATH}/include
 FFLAGS_NCMPI = -I${NCMPI_PATH}/include
 FFLAGS_HYPRE = -I${HYPRE_PATH}/include ${FFLAGS_LAPACK}
 FFLAGS_CUDA  = -I${CUDA_PATH}/include
 FFLAGS_MAGMA = -I${MAGMA_PATH}/include
 FFLAGS_OACC  = -fopenacc
 FFLAGS_UNIFYFS = -I${UNIFYFS_ROOT}
+FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_ZFP   = -I${ZFP_PATH}/include
 
 OPT_FLAGS    = -g -Ofast -funroll-loops -fprefetch-loop-arrays
 TEST_FLAGS   = -g -O3
@@ -104,19 +108,23 @@ FFLAGS_OPT   = -c ${OPT_FLAGS}
 FFLAGS_TEST  = -c ${TEST_FLAGS}
 FFLAGS_DEBUG = -c ${DEBUG_FLAGS} -fcheck=bounds,do,mem,pointer -ffpe-trap=invalid,zero,overflow -fbacktrace
 
-F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -fallow-argument-mismatch -cpp
+F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -cpp
+# F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -fallow-argument-mismatch -cpp
 f90FLAGS     = ${F90FLAGS}
-F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -fallow-argument-mismatch -cpp
+F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -cpp
+# F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -fallow-argument-mismatch -cpp
 f77FLAGS     = ${F77FLAGS}
 
 FFLAGS_AMREX = -I${AMREX_PATH}/include
-CFLAGS_HDF5  = -I$(HDF5_PATH)/include ${PP}H5_USE_18_API
+CFLAGS_HDF5  = -I$(HDF5_PATH)/include
 CFLAGS_NCMPI = -I$(NCMPI_PATH)/include
 CFLAGS_HYPRE = -I${HYPRE_PATH}/include ${CFLAGS_LAPACK}
 CFLAGS_CUDA  = -I${CUDA_PATH}/include
 CFLAGS_MAGMA = -I${MAGMA_PATH}/include
 CFLAGS_OACC  = -fopenacc
 CFLAGS_UNIFYFS = -I${UNIFYFS_ROOT}
+CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_ZFP   = -I${ZFP_PATH}/include
 
 CFLAGS_OPT   = -c ${OPT_FLAGS}
 CFLAGS_TEST  = -c ${TEST_FLAGS}
@@ -157,6 +165,8 @@ LIB_CUDA  = -L${CUDA_PATH}/lib64 -lcusparse -lcusolver -lcublas -lcudart -lcuda
 LIB_MAGMA = -L$(MAGMA_PATH)/lib -lmagma -Wl,-rpath,$(MAGMA_PATH)/lib
 LIB_OACC  =
 LIB_UNIFYFS = -L${UNIFYFS_ROOT} -lunifyfs_mpi_gotcha
+LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lzstd
+LIB_ZFP   = -L${ZFP_PATH}/lib64 -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib64
 
 LIB_OPT   =
 LIB_DEBUG =
