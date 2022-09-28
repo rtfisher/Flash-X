@@ -107,7 +107,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   /*   dimens_4d[0] = 2; */
   /* } */
 
-  printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]);
+  /* printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]); */
 
   dataspace = H5Screate_simple(rank, dimens_4d, NULL);
   if(dataspace < 0) Driver_abortC("Error: negative return from dataspace H5Screate_simple");
@@ -152,13 +152,13 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     chunk_dims[3] = *nxb;
     H5Pset_chunk(dcpl_id, rank, chunk_dims);
     H5Pset_alloc_time(dcpl_id, H5D_ALLOC_TIME_LATE);
-    printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]);
+    /* printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]); */
 /* #endif */    
 
 /* #ifdef USE_HDF5_ZFP */
-    double zfp_acc = 0.1;
+    double zfp_acc = 0.001;
     H5Pset_zfp_accuracy(dcpl_id, zfp_acc);
-    printf("Using ZFP acc mode\n");
+    /* printf("Using ZFP acc mode\n"); */
 /* #endif */    
 
 #ifdef FLASH_IO_ASYNC_HDF5
@@ -198,34 +198,22 @@ void FTOC(io_h5write_unknowns)(int* myPE,
       Driver_abortC("Error: unable to select hyperslab for unknowns dataspace");
     }
 
-    /* rank = 5; */
-    /* dimens_5d[0] = *local_blocks; */
-    /* dimens_5d[1] = *nzb; */
-    /* dimens_5d[2] = *nyb; */
-    /* dimens_5d[3] = *nxb; */
-    /* dimens_5d[4] = 1; */
-
-    rank = 4;
+    rank = 5;
     dimens_5d[0] = *local_blocks;
     dimens_5d[1] = *nzb;
     dimens_5d[2] = *nyb;
     dimens_5d[3] = *nxb;
+    dimens_5d[4] = 1;
 
-  } else {
+    } else {
     /* MPI rank owns zero blocks - create a memory space of
        size 1 so that H5Screate_simple does not abort */
-    /* rank = 5; */
-    /* dimens_5d[0] = 1; */
-    /* dimens_5d[1] = 1; */
-    /* dimens_5d[2] = 1; */
-    /* dimens_5d[3] = 1; */
-    /* dimens_5d[4] = 1; */
-
-    rank = 4;
+    rank = 5;
     dimens_5d[0] = 1;
     dimens_5d[1] = 1;
     dimens_5d[2] = 1;
     dimens_5d[3] = 1;
+    dimens_5d[4] = 1;
   }
 
   memspace = H5Screate_simple(rank, dimens_5d, NULL);
@@ -246,9 +234,6 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 
   /*ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);*/
   /*ierr = H5Pset_preserve(dxfer_template, 0u);*/
-
- 
-
 
 #ifdef CHUNK
   /* set the layout to chunked */
