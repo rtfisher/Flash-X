@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SEARCH_DIRS="/lib /usr"
-SEARCH_LIBS="mpi hdf5 fftw netcdf papi"
+SEARCH_LIBS="mpi hdf5 sz zfp fftw netcdf papi"
 
 function findlib()
 {
