@@ -8,12 +8,12 @@
 #include "io_flash.h"
 #include "io_h5_attribute.h"
 
-/* #ifdef USE_HDF5_ZFP */
+#ifdef FLASH_HDF5_ZFP
 #include "H5Zzfp_lib.h"
 #include "H5Zzfp_props.h"
-/* #endif */
+#endif
 
-#ifdef USE_HDF5_SZ
+#ifdef FLASH_HDF5_SZ
 #include "H5Z_SZ.h"
 #endif
 
@@ -129,15 +129,8 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   }else {
     
     /* create a parallel hdf5 dataset */
-/* #ifdef USE_HDF5_ZFP */
+#ifdef FLASH_HDF5_ZFP
     ret = H5Z_zfp_initialize();
-    if (ret < 0)
-      Driver_abortC("Error: H5Z_zfp_initialize\n");
-/* #endif */
-
-#ifdef USE_HDF5_SZ
-    // TODO: SZ config file
-    ret = H5Z_SZ_Init();
     if (ret < 0)
       Driver_abortC("Error: H5Z_zfp_initialize\n");
 #endif
@@ -145,7 +138,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_fill_time(dcpl_id, H5D_FILL_TIME_NEVER);
 
-/* #if (defined USE_HDF5_ZFP) || (defined USE_HDF5_SZ) */
+#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ)
     chunk_dims[0] = 1;
     chunk_dims[1] = *nzb;
     chunk_dims[2] = *nyb;
@@ -153,13 +146,21 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     H5Pset_chunk(dcpl_id, rank, chunk_dims);
     H5Pset_alloc_time(dcpl_id, H5D_ALLOC_TIME_LATE);
     /* printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]); */
-/* #endif */    
+#endif    
 
-/* #ifdef USE_HDF5_ZFP */
+#ifdef FLASH_HDF5_ZFP
     double zfp_acc = 0.001;
     H5Pset_zfp_accuracy(dcpl_id, zfp_acc);
-    /* printf("Using ZFP acc mode\n"); */
-/* #endif */    
+    printf("Using ZFP acc mode\n");
+#endif    
+
+#ifdef FLASH_HDF5_SZ
+    size_t cd_nelmts;
+    unsigned int* cd_values = NULL;
+    double rel_err = 0.001;
+    SZ_errConfigToCdArray(&cd_nelmts, &cd_values, REL, rel_err, rel_err, 0, 0);
+    H5Pset_filter(dcpl_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+#endif    
 
 #ifdef FLASH_IO_ASYNC_HDF5
     dataset = H5Dcreate_async(*file_identifier, record_label_new,
