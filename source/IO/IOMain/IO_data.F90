@@ -100,7 +100,8 @@ module IO_data
   real, save :: io_maxRSS, io_measRSS
 
   !compression
-  real, save :: io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, io_sz_abs_error, io_sz_rel_error
+  real, save :: io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible
+  real, save :: io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr
 
   integer,parameter :: io_maxParms = 500
   integer, parameter :: io_prevParmPad = 200

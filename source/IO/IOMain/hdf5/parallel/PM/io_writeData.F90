@@ -96,7 +96,9 @@ subroutine io_writeData(fileID)
                       io_faceZVarLabels, io_comm, io_splitNumBlks, io_plotfileMetadataDP, &
                       io_plotfileGridQuantityDP, io_fileFormatVersion, &
                       io_meshMe, io_acrossMe, io_acrossNumProcs, io_unklabelsGlobal, io_unkNonRep, &
-                      tree_data_t, io_sz_abs_error, io_sz_rel_error
+                      tree_data_t, io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, &
+                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr
+
    use io_intfTypesModule, ONLY: io_fileID_t
 
    use Simulation_interface, ONLY: Simulation_mapStrToInt
@@ -183,31 +185,37 @@ subroutine io_writeData(fileID)
 
 !! set compression values
 #ifdef FLASH_HDF5_SZ
-   if (io_sz_rel_error > 0.0) then
-	compression_val = io_sz_rel_error
-	compression_type = 1
-   else if (io_sz_abs_error > 0.0) then
-	compression_val = io_sz_abs_error
-	compression_type = 2
+   if (io_sz_abs_error > 0.0) then
+     compression_val = io_sz_abs_error
+     compression_type = 1
+   else if (io_sz_rel_error > 0.0) then
+     compression_val = io_sz_rel_error
+     compression_type = 2
+   else if (io_sz_pw_rel_error > 0.0) then
+     compression_val = io_sz_pw_rel_error
+     compression_type = 3
+   else if (io_sz_psnr > 0.0) then
+     compression_val = io_sz_psnr
+     compression_type = 4
    endif
 #endif
 
-
 #ifdef FLASH_HDF5_ZFP
    if (io_zfp_accuracy > 0.0) then
-	compression_val = io_zfp_accuracy
-	compression_type = 3
+     compression_val = io_zfp_accuracy
+     compression_type = 101
    else if (io_zfp_precision > 0.0) then
-	compression_val = io_zfp_precision
-	compression_type = 4
+     compression_val = io_zfp_precision
+     compression_type = 102
    else if (io_zfp_rate > 0.0) then
-	compression_val = io_zfp_rate
-	compression_type = 5
+     compression_val = io_zfp_rate
+     compression_type = 103
    else if (io_zfp_reversible > 0.0) then
-	compression_val = io_zfp_reversible
-	compression_type = 6
+     compression_val = io_zfp_reversible
+     compression_type = 104
   endif
 #endif
+
   !! call the generic function prepareLists to allocate and
   !! fill the runtime parameter lists and the scalar lists
    call io_prepareListsWrite()
@@ -362,7 +370,6 @@ subroutine io_writeData(fileID)
             !DEV: The above works for permanent guardcells, though it leaves the
             !guardcell region filled with arbitrary data in non-permanent
             !guardcell mode.
-	   write (*,*) "From fortran", compression_type, compression_val
             call io_h5write_unknowns(io_globalMe, &
                                      fileID, &
                                      GRID_IHI_GC, &

@@ -16,6 +16,8 @@ IF HDF5SZ
   LIBRARY SZ
   PARAMETER sz_abs_error REAL 0.0
   PARAMETER sz_rel_error REAL 0.0
+  PARAMETER sz_pw_rel_error REAL 0.0
+  PARAMETER sz_psnr REAL 0.0
 ENDIF
 
 

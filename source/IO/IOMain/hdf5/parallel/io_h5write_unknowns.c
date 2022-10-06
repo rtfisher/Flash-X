@@ -53,23 +53,12 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 			       double* compression_val,
 			       int* dowrite)
 {
-  printf("compression type, val %d, %f", *compression_type, *compression_val);
+  int rank;
   hid_t dataspace, dataset, memspace, dxfer_template, dataset_plist;
-
   herr_t status, ierr, herr;
-
-  int rank, ret;
-  hsize_t dimens_4d[4], dimens_5d[5], chunk_dims[4];
-
-  hsize_t start_4d[4]; 
-  hsize_t stride_4d[4], count_4d[4];
-  hid_t dcpl_id;
-  
-
-#ifdef CHUNK
-  hsize_t dimens_chunk[4];
-#endif
-
+  hsize_t dimens_4d[4], dimens_5d[5], chunk_dims[4], start_4d[4], stride_4d[4], count_4d[4];
+  size_t cd_nelmts;
+  unsigned int* cd_values = NULL;
   char record_label_new[5];
   const char minLabel[] = "minimum";
   const char maxLabel[] = "maximum";
@@ -85,7 +74,6 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   parallelIO = 0;
 #endif
 
-
 #define TRY_AND_CHECK_IGNORE(call, message) if ((call) < 0) \
         {fprintf(stderr,"Error (ignored) from %s in io_h5write_unknowns.\n",message);}
 
@@ -96,8 +84,6 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   strncpy(record_label_new, record_label,4);
   *(record_label_new + 4) = '\0';
 
-  
-
   /* set the dimensions of the dataset */
   rank = 4;
   dimens_4d[0] = *total_blocks;
@@ -105,17 +91,12 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   dimens_4d[2] = *nyb;
   dimens_4d[3] = *nxb;
 
-  /* if (dimens_4d[0] == 1) { */
-  /*   dimens_4d[0] = 2; */
-  /* } */
-
-  /* printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]); */
-
   dataspace = H5Screate_simple(rank, dimens_4d, NULL);
   if(dataspace < 0) Driver_abortC("Error: negative return from dataspace H5Screate_simple");
 
   dataset_plist = H5Pcreate(H5P_DATASET_CREATE);
   if(dataset_plist < 0) Driver_abortC("Error: negative return from dataset_plist H5Pcreate");
+  H5Pset_fill_time(dataset_plist, H5D_FILL_TIME_NEVER);
 
   if ((*myPE == MASTER_PE) && (*global_offset != 0)) {
     
@@ -128,48 +109,75 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     if(dataset < 0) {
       Driver_abortC("Error: H5Dopen io_h5write_unk\n");
     }
-  }else {
+  } else {
     
-    /* create a parallel hdf5 dataset */
 #ifdef FLASH_HDF5_ZFP
-    ret = H5Z_zfp_initialize();
-    if (ret < 0)
+    if (H5Z_zfp_initialize() < 0)
       Driver_abortC("Error: H5Z_zfp_initialize\n");
 #endif
 
-    dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_fill_time(dcpl_id, H5D_FILL_TIME_NEVER);
-
-#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ)
+#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ) || (defined CHUNK)
     chunk_dims[0] = 1;
     chunk_dims[1] = *nzb;
     chunk_dims[2] = *nyb;
     chunk_dims[3] = *nxb;
-    H5Pset_chunk(dcpl_id, rank, chunk_dims);
-    H5Pset_alloc_time(dcpl_id, H5D_ALLOC_TIME_LATE);
+    H5Pset_chunk(dataset_plist, rank, chunk_dims);
+    H5Pset_alloc_time(dataset_plist, H5D_ALLOC_TIME_LATE);
     /* printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]); */
 #endif    
 
-#ifdef FLASH_HDF5_ZFP
-    double zfp_acc = 0.001;
-    H5Pset_zfp_accuracy(dcpl_id, zfp_acc);
-    printf("Using ZFP acc mode\n");
-#endif    
-
+    switch(*compression_type) {
 #ifdef FLASH_HDF5_SZ
-    size_t cd_nelmts;
-    unsigned int* cd_values = NULL;
-    double rel_err = 0.001;
-    SZ_errConfigToCdArray(&cd_nelmts, &cd_values, REL, rel_err, rel_err, 0, 0);
-    H5Pset_filter(dcpl_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
-#endif    
+      case 1:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, ABS, *compression_val, 0, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+            
+      case 2:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, REL, 0, *compression_val, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
 
+      case 3:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, PW_REL, 0, 0, *compression_val, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 4:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, PSNR, 0, 0, 0, *compression_val);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+#endif    
+            
+#ifdef FLASH_HDF5_ZFP
+      case 101:
+        H5Pset_zfp_accuracy(dataset_plist, *compression_val);
+        break;
+
+      case 102:
+        H5Pset_zfp_precision(dataset_plist, *compression_val);
+        break;
+
+      case 103:
+        H5Pset_zfp_rate(dataset_plist, *compression_val);
+        break;
+
+      case 104:
+        H5Pset_zfp_reversible(dataset_plist);
+        break;
+#endif
+
+      default:
+        break;
+    }
+
+    /* create a parallel hdf5 dataset */
 #ifdef FLASH_IO_ASYNC_HDF5
     dataset = H5Dcreate_async(*file_identifier, record_label_new,
-                   H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT, io_es_id); 
+                   H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, dataset_plist, H5P_DEFAULT, io_es_id); 
 #else
     dataset = H5Dcreate(*file_identifier, record_label_new,
-                  H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT); 
+                  H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, dataset_plist, H5P_DEFAULT); 
 #endif    
 
     if(dataset < 0) {
@@ -233,24 +241,8 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 #endif
 
   /* default is 'independent' mode */
-
-
   /*ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);*/
   /*ierr = H5Pset_preserve(dxfer_template, 0u);*/
-
-#ifdef CHUNK
-  /* set the layout to chunked */
-
-  ierr = H5Pset_layout(dataset_plist, H5D_CHUNKED);
-  
-  /* create a chunk a containing 10 blocks worth of data */
-  dimens_chunk[0] = 10;
-  dimens_chunk[1] = *nzb;
-  dimens_chunk[2] = *nyb;
-  dimens_chunk[3] = *nxb;
-   
-  ierr = H5Pset_chunk(dataset_plist, 4, dimens_chunk);
-#endif
 
 
   /*!!DEV -kda I've removed the max and min parts for now */
