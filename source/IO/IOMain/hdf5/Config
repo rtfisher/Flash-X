@@ -6,11 +6,18 @@ USESETUPVARS parallelIO, IO, IOWriteGridFiles, HDF5ZFP, HDF5SZ
 
 IF HDF5ZFP
   LIBRARY ZFP
+  PARAMETER zfp_accuracy REAL 0.0
+  PARAMETER zfp_rate REAL 0.0
+  PARAMETER zfp_precision REAL 0.0
+  PARAMETER zfp_reversible REAL 0.0
 ENDIF
 
 IF HDF5SZ
   LIBRARY SZ
+  PARAMETER sz_abs_error REAL 0.0
+  PARAMETER sz_rel_error REAL 0.0
 ENDIF
+
 
 IF IOWriteGridFiles
   REQUIRES IO/IOMain/hdf5/writeGrid

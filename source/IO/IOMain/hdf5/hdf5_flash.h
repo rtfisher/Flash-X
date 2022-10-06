@@ -33,9 +33,6 @@
 #include "constants.h"
 #include <hdf5.h>
 
-#include "H5Zzfp_lib.h"
-#include "H5Zzfp_props.h"
-
 #define FILE_FORMAT_VERSION 9
 
 #define LIST_STRING_SIZE MAX_STRING_LENGTH

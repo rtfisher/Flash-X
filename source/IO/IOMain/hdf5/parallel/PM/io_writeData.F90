@@ -96,7 +96,7 @@ subroutine io_writeData(fileID)
                       io_faceZVarLabels, io_comm, io_splitNumBlks, io_plotfileMetadataDP, &
                       io_plotfileGridQuantityDP, io_fileFormatVersion, &
                       io_meshMe, io_acrossMe, io_acrossNumProcs, io_unklabelsGlobal, io_unkNonRep, &
-                      tree_data_t
+                      tree_data_t, io_sz_abs_error, io_sz_rel_error
    use io_intfTypesModule, ONLY: io_fileID_t
 
    use Simulation_interface, ONLY: Simulation_mapStrToInt
@@ -134,7 +134,7 @@ subroutine io_writeData(fileID)
 
    integer :: localNumBlocks, blockID
    integer :: i, lb, j, u, AllocateStatus
-   integer :: dowrite
+   integer :: dowrite, compression_type
    integer, allocatable :: procnumber(:)
 
    ! allocate storage to hold a single variable information
@@ -149,6 +149,7 @@ subroutine io_writeData(fileID)
    real(kind=single) :: tmpSingle(MDIM, MAXBLOCKS)
    real(kind=single) :: bndSingle(2, MDIM, MAXBLOCKS)
    real(kind=single) :: spMax, spMin
+   real, save :: compression_val
 
    logical :: isPlotVar
    logical, allocatable :: isPlotVars(:)
@@ -180,6 +181,33 @@ subroutine io_writeData(fileID)
                          libType = IO_FILE_HDF5
    integer :: numFileBlks
 
+!! set compression values
+#ifdef FLASH_HDF5_SZ
+   if (io_sz_rel_error > 0.0) then
+	compression_val = io_sz_rel_error
+	compression_type = 1
+   else if (io_sz_abs_error > 0.0) then
+	compression_val = io_sz_abs_error
+	compression_type = 2
+   endif
+#endif
+
+
+#ifdef FLASH_HDF5_ZFP
+   if (io_zfp_accuracy > 0.0) then
+	compression_val = io_zfp_accuracy
+	compression_type = 3
+   else if (io_zfp_precision > 0.0) then
+	compression_val = io_zfp_precision
+	compression_type = 4
+   else if (io_zfp_rate > 0.0) then
+	compression_val = io_zfp_rate
+	compression_type = 5
+   else if (io_zfp_reversible > 0.0) then
+	compression_val = io_zfp_reversible
+	compression_type = 6
+  endif
+#endif
   !! call the generic function prepareLists to allocate and
   !! fill the runtime parameter lists and the scalar lists
    call io_prepareListsWrite()
@@ -262,6 +290,10 @@ subroutine io_writeData(fileID)
    call io_createDatasets(fileID, numFileBlks, presentDims)
 
    tree_data%bnd_box => bnd_box
+
+   call io_createDatasets(fileID, numFileBlks, presentDims)
+
+   tree_data%bnd_box => bnd_box
    tree_data%coord => coord
    tree_data%bsize => bsize
    tree_data%gid => gr_gid
@@ -330,6 +362,7 @@ subroutine io_writeData(fileID)
             !DEV: The above works for permanent guardcells, though it leaves the
             !guardcell region filled with arbitrary data in non-permanent
             !guardcell mode.
+	   write (*,*) "From fortran", compression_type, compression_val
             call io_h5write_unknowns(io_globalMe, &
                                      fileID, &
                                      GRID_IHI_GC, &
@@ -342,6 +375,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+				     compression_type, &
+                                     compression_val, &
                                      dowrite)
             deallocate (unkBufGC)
          else
@@ -359,6 +394,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+				     compression_type, &
+				     compression_val, &
                                      dowrite)
          end if
       else
@@ -379,6 +416,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+					compression_type, &
+					compression_val, &
                                         dowrite)
             else
                unkt(1, :, :, :, 1:localNumBlocks) = real(unk(i, &
@@ -688,10 +727,6 @@ subroutine io_writeData(fileID)
       deallocate (faceXBuf)
       deallocate (globalFaceXMin)
       deallocate (globalFaceXMax)
-
-      if (NDIM .gt. 1) then
-         deallocate (faceYBuf)
-         deallocate (globalFaceYMin)
          deallocate (globalFaceYMax)
       end if
 

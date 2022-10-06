@@ -49,9 +49,11 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 			       int* local_blocks,  
 			       int* total_blocks,
 			       int* global_offset,
+			       int* compression_type,
+			       double* compression_val,
 			       int* dowrite)
 {
-
+  printf("compression type, val %d, %f", *compression_type, *compression_val);
   hid_t dataspace, dataset, memspace, dxfer_template, dataset_plist;
 
   herr_t status, ierr, herr;
