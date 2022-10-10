@@ -298,10 +298,6 @@ subroutine io_writeData(fileID)
    call io_createDatasets(fileID, numFileBlks, presentDims)
 
    tree_data%bnd_box => bnd_box
-
-   call io_createDatasets(fileID, numFileBlks, presentDims)
-
-   tree_data%bnd_box => bnd_box
    tree_data%coord => coord
    tree_data%bsize => bsize
    tree_data%gid => gr_gid
