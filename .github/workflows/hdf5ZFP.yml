@@ -1,0 +1,95 @@
+# This is a basic workflow that is manually triggered
+
+name: hdf5AsyncIO
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      name:
+        # Problem name
+        description: 'Problem to setup'
+        # Default value if no value is explicitly provided
+        default: 'Sod'
+        # Input has to be provided for the workflow to run
+        required: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  ubuntu-latest:
+    name: "ubuntu-latest"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Dependencies1
+      run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule update --init --recursive
+          mydir="$PWD"
+          sudo apt-get update
+          sudo apt-get install libtool
+          # zlib
+          sudo apt-get install libopenmpi-dev
+          sudo apt-get install zlib1g-dev 
+          # python3
+          sudo apt-get install python3          
+          # zfp, h5zzfp and hdf5
+          git clone https://github.com/LLNL/zfp.git
+          git clone https://github.com/LLNL/H5Z-ZFP.git
+          git clone https://github.com/HDFGroup/hdf5.git
+          # mpi
+          export HDF5_DIR=$mydir/hdf5/install    
+          mkdir $HDF5_DIR
+          # Compile HDF5
+          cd hdf5
+          export HDF5_LIBTOOL=/usr/bin/libtoolize
+          ./autogen.sh
+          ./configure --prefix=$HDF5_DIR --enable-parallel --enable-fortran
+          make && make install          
+          #compile and make zfp
+          cd $mydir/zfp
+          mkdir build
+          cd build
+          cmake -DZFP_BIT_STREAM_WORD_SIZE=8 -DCMAKE_INSTALL_PREFIX=$mydir/zfp/install ..
+          make -j4
+          make install
+          #compile and make h5zzfp
+          cd $mydir/H5Z-ZFP
+          mkdir build
+          cd build
+          export ZFP_DIR=$mydir/zfp/install
+          cmake -DCMAKE_INSTALL_PREFIX=$mydir/H5Z-ZFP/install ..
+          make -j4
+          make install
+    - name: Flash get submodule and launch setup 
+      run: |
+          mydir="$PWD"
+          echo $mydir
+          cd $mydir/sites/hello
+          mv Makefile.h Makefile.h.hello
+          wget https://gist.githubusercontent.com/rajeeja/768b83c41c64563e81df84d4021b9bd4/raw/8b4064fb5e6ef728071842d7aef4394ef7d066fb/Makefile.h
+          cd ../..         
+          ./setup ${{ github.event.inputs.name }} -auto -debug -site=hello +parallelIO +hdf5zfp       
+    - name: Flash make
+      run: |
+          mydir="$PWD"
+          echo $mydir
+          cd object
+          make -j4
+    - name: Flash run
+      run: |          
+          mydir="$PWD"
+          echo $mydir
+          cd object
+          export H5_DIR=/home/runner/work/Flash-X/Flash-X/hdf5
+          export LD_LIBRARY_PATH=$VOL_DIR/src:$H5_DIR/install/lib:$LD_LIBRARY_PATH
+          export HDF5_PLUGIN_PATH="$mydir/H5Z-ZFP/install/plugin"        
+          mpiexec -np 2 ./flashx    
+          ls -ltrh *chk*
+          head -n 21 *.log
+          tail -n 200 *.log          
+          #h5ls -v filename
+          #h5diff -v -d 0.001 sedov_hdf5_chk_0010 ../sedov8_zfp/sedov_hdf5_chk_0010 pres          
