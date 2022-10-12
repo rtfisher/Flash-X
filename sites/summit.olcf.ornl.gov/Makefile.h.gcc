@@ -167,8 +167,8 @@ LIB_CUDA  = -L${CUDA_PATH}/lib64 -lcusparse -lcusolver -lcublas -lcudart -lcuda
 LIB_MAGMA = -L$(MAGMA_PATH)/lib -lmagma -Wl,-rpath,$(MAGMA_PATH)/lib
 LIB_OACC  =
 LIB_UNIFYFS = -L${UNIFYFS_ROOT} -lunifyfs_mpi_gotcha
-LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lSZ -lzlib -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
-LIB_ZFP   = -L${ZFP_PATH}/lib64 -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib64 -Wl,-rpath,${H5Z_PATH}/lib
+LIB_SZ    = -L${SZ_PATH}/lib -DFLASH_HDF5_SZ -lSZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib64 -DFLASH_HDF5_SZP -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib64 -Wl,-rpath,${H5Z_PATH}/lib
 
 LIB_OPT   =
 LIB_DEBUG =
