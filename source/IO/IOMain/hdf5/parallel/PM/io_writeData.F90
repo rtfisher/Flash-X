@@ -378,7 +378,7 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
-				     compression_type, &
+                                     compression_type, &
                                      compression_val, &
                                      dowrite)
             deallocate (unkBufGC)
@@ -397,8 +397,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
-				     compression_type, &
-				     compression_val, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
          end if
       else
@@ -419,8 +419,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
-					compression_type, &
-					compression_val, &
+                                        compression_type, &
+                                        compression_val, &
                                         dowrite)
             else
                unkt(1, :, :, :, 1:localNumBlocks) = real(unk(i, &
@@ -505,6 +505,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 
          else
@@ -607,6 +609,8 @@ subroutine io_writeData(fileID)
                                   localNumBlocks, &
                                   io_splitNumBlks, &
                                   localOffset, &
+                                  compression_type, &
+                                  compression_val, &
                                   dowrite)
 
          if (NDIM .gt. 1) then
@@ -626,6 +630,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 
             if (NDIM .gt. 2) then
@@ -645,6 +651,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+                                        compression_type, &
+                                        compression_val, &
                                         dowrite)
 
             end if
@@ -672,6 +680,8 @@ subroutine io_writeData(fileID)
                                   localNumBlocks, &
                                   io_splitNumBlks, &
                                   localOffset, &
+                                  compression_type, &
+                                  compression_val, &
                                   dowrite)
       end do
 
@@ -696,6 +706,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
          end do
 
@@ -720,6 +732,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+                                        compression_type, &
+                                        compression_val, &
                                         dowrite)
             end do
          end if

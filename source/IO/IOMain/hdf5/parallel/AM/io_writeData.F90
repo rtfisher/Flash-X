@@ -95,7 +95,9 @@ subroutine io_writeData(fileID)
                       io_faceZVarLabels, io_comm, io_splitNumBlks, io_plotfileMetadataDP, &
                       io_plotfileGridQuantityDP, io_fileFormatVersion, &
                       io_meshMe, io_acrossMe, io_acrossNumProcs, io_unklabelsGlobal, io_unkNonRep, &
-                      tree_data_t
+                      tree_data_t, io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, &
+                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr
+
    use io_intfTypesModule, ONLY: io_fileID_t
 
    use Simulation_interface, ONLY: Simulation_mapStrToInt
@@ -141,7 +143,8 @@ subroutine io_writeData(fileID)
 
    integer :: localNumBlocks, blockID
    integer :: i, lb, j, u, AllocateStatus
-   integer :: dowrite
+   integer :: dowrite, compression_type
+   real, save :: compression_val
    integer, allocatable :: procnumber(:)
 
    ! allocate storage to hold a single variable information
@@ -198,6 +201,40 @@ subroutine io_writeData(fileID)
 
    nullify (solnData)
    nullify (scratch)
+
+
+!! set compression values
+#ifdef FLASH_HDF5_SZ
+   if (io_sz_abs_error > 0.0) then
+     compression_val = io_sz_abs_error
+     compression_type = 1
+   else if (io_sz_rel_error > 0.0) then
+     compression_val = io_sz_rel_error
+     compression_type = 2
+   else if (io_sz_pw_rel_error > 0.0) then
+     compression_val = io_sz_pw_rel_error
+     compression_type = 3
+   else if (io_sz_psnr > 0.0) then
+     compression_val = io_sz_psnr
+     compression_type = 4
+   endif
+#endif
+
+#ifdef FLASH_HDF5_ZFP
+   if (io_zfp_accuracy > 0.0) then
+     compression_val = io_zfp_accuracy
+     compression_type = 101
+   else if (io_zfp_precision > 0.0) then
+     compression_val = io_zfp_precision
+     compression_type = 102
+   else if (io_zfp_rate > 0.0) then
+     compression_val = io_zfp_rate
+     compression_type = 103
+   else if (io_zfp_reversible > 0.0) then
+     compression_val = io_zfp_reversible
+     compression_type = 104
+  endif
+#endif
 
   !! call the generic function prepareLists to allocate and
   !! fill the runtime parameter lists and the scalar lists
@@ -371,6 +408,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+                                        compression_type, &
+                                        compression_val, &
                                         dowrite)
             else
                call io_h5write_unknowns(io_globalMe, &
@@ -385,6 +424,8 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+                                        compression_type, &
+                                        compression_val, &
                                         dowrite)
             end if
          else
@@ -403,6 +444,8 @@ subroutine io_writeData(fileID)
                                            localNumBlocks, &
                                            io_splitNumBlks, &
                                            localOffset, &
+                                        compression_type, &
+                                        compression_val, &
                                            dowrite)
                else
                   spMax = real(globalVarMax(u), kind=single)
@@ -475,6 +518,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 
          else
@@ -567,6 +612,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 
 #if NDIM >= 2
@@ -597,6 +644,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 #endif
 
@@ -628,6 +677,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 #endif
          end do
@@ -669,6 +720,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 #if NDIM >= 2
             call Grid_getTileIterator(itor, ALL_BLKS, tiling=.FALSE.); lb = 1
@@ -694,6 +747,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 #endif
 
@@ -721,6 +776,8 @@ subroutine io_writeData(fileID)
                                      localNumBlocks, &
                                      io_splitNumBlks, &
                                      localOffset, &
+                                     compression_type, &
+                                     compression_val, &
                                      dowrite)
 #endif
          end do
