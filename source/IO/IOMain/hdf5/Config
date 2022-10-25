@@ -20,6 +20,13 @@ IF HDF5SZ
   PARAMETER sz_psnr REAL 0.0
 ENDIF
 
+IF HDF5SZ3
+  LIBRARY SZ3
+  PARAMETER sz_abs_error REAL 0.0
+  PARAMETER sz_rel_error REAL 0.0
+#  PARAMETER sz_pw_rel_error REAL 0.0
+  PARAMETER sz_psnr REAL 0.0
+ENDIF
 
 IF IOWriteGridFiles
   REQUIRES IO/IOMain/hdf5/writeGrid

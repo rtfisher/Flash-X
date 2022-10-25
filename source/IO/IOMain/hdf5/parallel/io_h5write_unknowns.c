@@ -17,6 +17,10 @@
 #include "H5Z_SZ.h"
 #endif
 
+#ifdef FLASH_HDF5_SZ3
+#include "hdf5_sz3/include/H5Z_SZ3.hpp"
+#endif
+
 #ifdef FLASH_IO_ASYNC_HDF5
   extern hid_t io_es_id;
 #endif
@@ -116,7 +120,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
       Driver_abortC("Error: H5Z_zfp_initialize\n");
 #endif
 
-#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ) || (defined CHUNK)
+#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3) || (defined CHUNK)
     chunk_dims[0] = 1;
     chunk_dims[1] = *nzb;
     chunk_dims[2] = *nyb;
@@ -127,7 +131,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 #endif    
 
     switch(*compression_type) {
-#ifdef FLASH_HDF5_SZ
+#if (defined FLASH_HDF5_SZ)
       case 1:
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, ABS, *compression_val, 0, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
@@ -146,6 +150,28 @@ void FTOC(io_h5write_unknowns)(int* myPE,
       case 4:
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, PSNR, 0, 0, 0, *compression_val);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+#endif    
+
+#if (defined FLASH_HDF5_SZ3)
+      case 1:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 0, *compression_val, 0, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+            
+      case 2:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 1, 0, *compression_val, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 3:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 4, 0, 0, *compression_val, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 4:
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 3, 0, 0, 0, *compression_val);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
 #endif    
             

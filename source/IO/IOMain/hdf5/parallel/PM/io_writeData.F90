@@ -184,7 +184,7 @@ subroutine io_writeData(fileID)
    integer :: numFileBlks
 
 !! set compression values
-#ifdef FLASH_HDF5_SZ
+#if (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3)
    if (io_sz_abs_error > 0.0) then
      compression_val = io_sz_abs_error
      compression_type = 1

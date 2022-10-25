@@ -18,6 +18,7 @@ HYPRE_PATH = ${OLCF_HYPRE_ROOT}
 CUDA_PATH  = ${OLCF_CUDA_ROOT}
 MAGMA_PATH = ${OLCF_MAGMA_ROOT}
 SZ_PATH    = /gpfs/alpine/csc300/world-shared/gnu_build/SZ/install
+SZ3_PATH    = /gpfs/alpine/csc300/world-shared/gnu_build/SZ3/build/install
 ZFP_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/zfp-0.5.5
 H5Z_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/H5Z-ZFP-0.5.5/install
 
@@ -100,6 +101,7 @@ FFLAGS_MAGMA = -I${MAGMA_PATH}/include
 FFLAGS_OACC  = -fopenacc
 FFLAGS_UNIFYFS = -I${UNIFYFS_ROOT}
 FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_SZ3   = -I${SZ3_PATH}/include
 FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 OPT_FLAGS    = -g -Ofast -funroll-loops -fprefetch-loop-arrays
@@ -125,7 +127,7 @@ CFLAGS_CUDA  = -I${CUDA_PATH}/include
 CFLAGS_MAGMA = -I${MAGMA_PATH}/include
 CFLAGS_OACC  = -fopenacc
 CFLAGS_UNIFYFS = -I${UNIFYFS_ROOT}
-CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_SZ3   = -I${SZ3_PATH}/include
 CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 CFLAGS_OPT   = -c ${OPT_FLAGS}
@@ -168,7 +170,8 @@ LIB_MAGMA = -L$(MAGMA_PATH)/lib -lmagma -Wl,-rpath,$(MAGMA_PATH)/lib
 LIB_OACC  =
 LIB_UNIFYFS = -L${UNIFYFS_ROOT} -lunifyfs_mpi_gotcha
 LIB_SZ    = -L${SZ_PATH}/lib -DFLASH_HDF5_SZ -lSZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
-LIB_ZFP   = -L${ZFP_PATH}/lib64 -DFLASH_HDF5_SZP -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib64 -Wl,-rpath,${H5Z_PATH}/lib
+LIB_SZ3   = -L${SZ3_PATH}/lib -DFLASH_HDF5_SZ -lzstd -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib64 -DFLASH_HDF5_ZFP -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib64 -Wl,-rpath,${H5Z_PATH}/lib
 
 LIB_OPT   =
 LIB_DEBUG =

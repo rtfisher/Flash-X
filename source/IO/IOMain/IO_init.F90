@@ -108,6 +108,13 @@ subroutine IO_init()
   call RuntimeParameters_get('sz_psnr', io_sz_psnr)
 #endif
 
+#ifdef FLASH_HDF5_SZ3
+  call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
+  call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
+  ! call RuntimeParameters_get('sz_pw_rel_error', io_sz_pw_rel_error)
+  call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+#endif
+
   call RuntimeParameters_get('alwaysRestrictCheckpoint', io_alwaysRestrictCheckpoint)
   call RuntimeParameters_get('alwaysComputeUserVars', io_alwaysComputeUserVars)
   call RuntimeParameters_get('ignoreForcedPlot', io_ignoreForcedPlot)

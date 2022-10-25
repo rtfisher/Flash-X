@@ -10,7 +10,7 @@ EXCLUSIVE *
 
 # the setupvariable IO can influence which branch we take
 # if IO is one of the recognized and non-empty give an error
-USESETUPVARS IO, AsyncHDF5, HDF5SZ, HDF5ZFP
+USESETUPVARS IO, AsyncHDF5, HDF5SZ, HDF5SZ3, HDF5ZFP
 
 IF AsyncHDF5
   PPDEFINE FLASH_IO_ASYNC_HDF5
@@ -22,6 +22,10 @@ ENDIF
 
 IF HDF5SZ
   PPDEFINE FLASH_HDF5_SZ
+ENDIF
+
+IF HDF5SZ3
+  PPDEFINE FLASH_HDF5_SZ3
 ENDIF
 
 IF IO=="direct"
