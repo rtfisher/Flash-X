@@ -2,12 +2,10 @@
 #----------------------------------------------------------------------------
 # Set the AMReX library path -- manual installation for multiple variants
 #----------------------------------------------------------------------------
-ifeq      ($(NDIM), 1)
-AMREX_PATH=/Users/mbook/amrex_install/1D
-else ifeq ($(NDIM), 2)
-AMREX_PATH=/Users/mbook/amrex_install/2D
+ifeq      ($(NDIM), 2)
+AMREX_PATH=/Users/mbook/install/amrex2d
 else ifeq ($(NDIM), 3)
-AMREX_PATH=/Users/mbook/amrex_install/3D
+AMREX_PATH=/Users/mbook/install/amrex3d
 else
 AMREX_PATH=
 endif
@@ -22,6 +20,7 @@ PAPI_PATH  =
 PAPI_FLAGS =
 LIB_NCMPI = /opt/homebrew/Cellar/hdf5-mpi/1.12.2_1/
 SZ_PATH    = /Users/mbook/install/sz
+SZ3_PATH    = /Users/mbook/install/sz3
 ZFP_PATH   = /Users/mbook/install/zfp/
 H5Z_PATH   = /Users/mbook/install/h5zzfp/
 
@@ -64,6 +63,7 @@ FFLAGS_TEST = -ggdb -c -fdefault-real-8 -fdefault-double-8 \
 	-ffree-line-length-none -DHAVE_MPI_MODULE -fallow-argument-mismatch
 
 FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_SZ3    = -I${SZ3_PATH}/include
 FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 FFLAGS_HYPRE =
@@ -90,6 +90,7 @@ CDEFINES += -DDarwin
 CFLAGS_HDF5 = -I ${HDF5_PATH}/include 
 CFLAGS_NCMPI = -I ${NCMPI_PATH}/include
 CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_SZ3    = -I${SZ3_PATH}/include
 CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 #----------------------------------------------------------------------------
@@ -127,7 +128,8 @@ LIB_MPE   =
 LIB_HYPRE =
 LIB_AMREX = -L${AMREX_PATH}/lib -lamrex
 LIB_STDCXX = -lstdc++
-LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lSZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ3    = -L${SZ3_PATH}/lib -DUSE_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
 LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
 
 # Uncomment the following line to use electic fence memory debugger.
