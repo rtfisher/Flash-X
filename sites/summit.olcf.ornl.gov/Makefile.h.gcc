@@ -127,6 +127,7 @@ CFLAGS_CUDA  = -I${CUDA_PATH}/include
 CFLAGS_MAGMA = -I${MAGMA_PATH}/include
 CFLAGS_OACC  = -fopenacc
 CFLAGS_UNIFYFS = -I${UNIFYFS_ROOT}
+CFLAGS_SZ    = -I${SZ_PATH}/include
 CFLAGS_SZ3   = -I${SZ3_PATH}/include
 CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
