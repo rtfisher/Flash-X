@@ -132,7 +132,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 #endif    
 
     switch(*compression_type) {
-#if (defined FLASH_HDF5_SZ)
+#ifdef FLASH_HDF5_SZ
       case 1:
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, ABS, *compression_val, 0, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
@@ -154,46 +154,58 @@ void FTOC(io_h5write_unknowns)(int* myPE,
         break;
 #endif    
 
-#if (defined FLASH_HDF5_SZ3)
+#ifdef FLASH_HDF5_SZ3
       // EB_ABS, EB_REL, EB_PSNR, EB_L2NORM, EB_ABS_AND_REL, EB_ABS_OR_REL
       case 1:
         // ABS
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ ABS %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 0, *compression_val, 0, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
             
       case 2:
         // REL
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ REL %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 1, 0, *compression_val, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
 
       case 3:
         // Not supported with SZ3
+        if(*myPE == MASTER_PE) 
+            printf("Not supported by SZ3 %f %f\n",  *compression_val, *compression_val2);
         break;
 
       case 4:
         // NORM
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ NORM %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 3, 0, 0, 0, *compression_val);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
 
       case 5:
         // PSNR
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ PSNR %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 2, 0, 0, *compression_val, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
 
       case 6:
         // ABS AND REL
-        printf("Using ABS_AND_REL %f %f\n",  *compression_val, *compression_val2);
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ ABS_AND_REL %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 4, *compression_val, *compression_val2, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;
 
       case 7:
         // ABS OR REL
-        printf("Using ABS_OR_REL %f %f\n",  *compression_val, *compression_val2);
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ ABS_OR_REL %f %f\n",  *compression_val, *compression_val2);
         SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 5, *compression_val, *compression_val2, 0, 0);
         H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
         break;

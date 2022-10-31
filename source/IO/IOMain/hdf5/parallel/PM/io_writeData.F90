@@ -187,7 +187,15 @@ subroutine io_writeData(fileID)
 
 !! set compression values
 #if (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3)
-   if (io_sz_abs_error > 0.0) then
+   if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 6
+   else if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. .not. io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 7
+   else if (io_sz_abs_error > 0.0) then
      compression_val = io_sz_abs_error
      compression_type = 1
    else if (io_sz_rel_error > 0.0) then
@@ -202,14 +210,6 @@ subroutine io_writeData(fileID)
    else if (io_sz_norm > 0.0) then
      compression_val = io_sz_norm
      compression_type = 5
-   else if (io_sz_abs_and_rel) then
-     compression_val = io_sz_abs_error
-     compression_val2 = io_sz_rel_error
-     compression_type = 6
-   else if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. .not. io_sz_abs_and_rel) then
-     compression_val = io_sz_abs_error
-     compression_val2 = io_sz_rel_error
-     compression_type = 7
    endif
 #endif
 
