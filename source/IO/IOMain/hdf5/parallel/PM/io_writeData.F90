@@ -97,7 +97,9 @@ subroutine io_writeData(fileID)
                       io_plotfileGridQuantityDP, io_fileFormatVersion, &
                       io_meshMe, io_acrossMe, io_acrossNumProcs, io_unklabelsGlobal, io_unkNonRep, &
                       tree_data_t, io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, &
-                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr
+                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr, &
+                      io_sz_norm, io_sz_abs_and_rel
+
 
    use io_intfTypesModule, ONLY: io_fileID_t
 
@@ -151,7 +153,7 @@ subroutine io_writeData(fileID)
    real(kind=single) :: tmpSingle(MDIM, MAXBLOCKS)
    real(kind=single) :: bndSingle(2, MDIM, MAXBLOCKS)
    real(kind=single) :: spMax, spMin
-   real, save :: compression_val
+   real, save :: compression_val, compression_val2
 
    logical :: isPlotVar
    logical, allocatable :: isPlotVars(:)
@@ -197,6 +199,17 @@ subroutine io_writeData(fileID)
    else if (io_sz_psnr > 0.0) then
      compression_val = io_sz_psnr
      compression_type = 4
+   else if (io_sz_norm > 0.0) then
+     compression_val = io_sz_norm
+     compression_type = 5
+   else if (io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 6
+   else if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. .not. io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 7
    endif
 #endif
 
@@ -380,6 +393,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
             deallocate (unkBufGC)
          else
@@ -399,6 +413,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
          end if
       else
@@ -421,6 +436,7 @@ subroutine io_writeData(fileID)
                                         localOffset, &
                                         compression_type, &
                                         compression_val, &
+                                        compression_val2, &
                                         dowrite)
             else
                unkt(1, :, :, :, 1:localNumBlocks) = real(unk(i, &
@@ -507,6 +523,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 
          else
@@ -611,6 +628,7 @@ subroutine io_writeData(fileID)
                                   localOffset, &
                                   compression_type, &
                                   compression_val, &
+                                  compression_val2, &
                                   dowrite)
 
          if (NDIM .gt. 1) then
@@ -632,6 +650,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 
             if (NDIM .gt. 2) then
@@ -653,6 +672,7 @@ subroutine io_writeData(fileID)
                                         localOffset, &
                                         compression_type, &
                                         compression_val, &
+                                        compression_val2, &
                                         dowrite)
 
             end if
@@ -682,6 +702,7 @@ subroutine io_writeData(fileID)
                                   localOffset, &
                                   compression_type, &
                                   compression_val, &
+                                  compression_val2, &
                                   dowrite)
       end do
 
@@ -708,6 +729,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
          end do
 
@@ -734,6 +756,7 @@ subroutine io_writeData(fileID)
                                         localOffset, &
                                         compression_type, &
                                         compression_val, &
+                                        compression_val2, &
                                         dowrite)
             end do
          end if

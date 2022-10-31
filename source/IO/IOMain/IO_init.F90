@@ -111,8 +111,11 @@ subroutine IO_init()
 #ifdef FLASH_HDF5_SZ3
   call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
   call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
-  ! call RuntimeParameters_get('sz_pw_rel_error', io_sz_pw_rel_error)
   call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+  call RuntimeParameters_get('sz_norm', io_sz_norm)
+  if ((io_sz_abs_error > 0) .AND. (io_sz_rel_error > 0)) then
+      call RuntimeParameters_get('sz_abs_and_rel_error', io_sz_abs_and_rel)
+  endif
 #endif
 
   call RuntimeParameters_get('alwaysRestrictCheckpoint', io_alwaysRestrictCheckpoint)

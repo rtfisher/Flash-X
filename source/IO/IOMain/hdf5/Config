@@ -24,8 +24,9 @@ IF HDF5SZ3
   LIBRARY SZ3
   PARAMETER sz_abs_error REAL 0.0
   PARAMETER sz_rel_error REAL 0.0
-#  PARAMETER sz_pw_rel_error REAL 0.0
   PARAMETER sz_psnr REAL 0.0
+  PARAMETER sz_norm REAL 0.0
+  PARAMETER sz_abs_and_rel_error BOOLEAN FALSE
 ENDIF
 
 IF IOWriteGridFiles
