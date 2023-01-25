@@ -128,9 +128,9 @@ LIB_MPE   =
 LIB_HYPRE =
 LIB_AMREX = -L${AMREX_PATH}/lib -lamrex
 LIB_STDCXX = -lstdc++
-LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
-LIB_SZ3    = -L${SZ3_PATH}/lib -DUSE_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
-LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
+LIB_SZ    = -L${SZ_PATH}/lib -DFLASH_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ3    = -L${SZ3_PATH}/lib -DFLASH_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -DFLASH_HDF5_ZFP -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
 
 # Uncomment the following line to use electic fence memory debugger.
 # Need the following environmental variable (see env.sh):
