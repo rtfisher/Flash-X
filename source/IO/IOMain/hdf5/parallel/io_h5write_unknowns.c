@@ -96,10 +96,6 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   dimens_4d[2] = *nyb;
   dimens_4d[3] = *nxb;
 
-  /* if (dimens_4d[0] == 1) { */
-  /*   dimens_4d[0] = 2; */
-  /* } */
-
   /* printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]); */
 
   dataspace = H5Screate_simple(rank, dimens_4d, NULL);
