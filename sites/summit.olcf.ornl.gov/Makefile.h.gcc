@@ -18,7 +18,7 @@ HYPRE_PATH = ${OLCF_HYPRE_ROOT}
 CUDA_PATH  = ${OLCF_CUDA_ROOT}
 MAGMA_PATH = ${OLCF_MAGMA_ROOT}
 SZ_PATH    = /gpfs/alpine/csc300/world-shared/gnu_build/SZ/install
-SZ3_PATH    = /gpfs/alpine/csc300/world-shared/gnu_build/SZ3/build/install
+SZ3_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/SZ3/build/install
 ZFP_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/zfp-0.5.5
 H5Z_PATH   = /gpfs/alpine/csc300/world-shared/gnu_build/H5Z-ZFP-0.5.5/install
 
