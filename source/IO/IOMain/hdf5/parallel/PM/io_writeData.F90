@@ -505,9 +505,9 @@ subroutine io_writeData(fileID)
                                            localNumBlocks, &
                                            io_splitNumBlks, &
                                            localOffset, &
-                                           compression_type, &
-                                           compression_val, &
-                                           compression_val2, &
+                                           compression_type_plt, &
+                                           compression_val_plt, &
+                                           compression_val2_plt, &
                                            dowrite)
             end if
          end if
@@ -595,9 +595,9 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
-                                        compression_type, &
-                                        compression_val, &
-                                        compression_val2, &
+                                        compression_type_plt, &
+                                        compression_val_plt, &
+                                        compression_val2_plt, &
                                         dowrite)
 
          end if
