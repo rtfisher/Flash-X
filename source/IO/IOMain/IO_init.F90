@@ -173,8 +173,8 @@ call RuntimeParameters_get('sz_norm_plt', io_sz_norm_plt)
   call RuntimeParameters_get('stats_file', io_statsFileName)  
   call RuntimeParameters_get('basenm', io_baseName)
   !! if basenm is changed from default and stats_file isn't, then make it conform
-  if ((io_baseName .NE. 'flash_') .AND.                    &
- &      (io_statsFileName .EQ. "flash.dat")) then
+  if ((io_baseName .NE. 'flashx_') .AND.                    &
+ &      (io_statsFileName .EQ. "flashx.dat")) then
      posBlank = index(io_baseName,' ')
      io_statsFileName = io_baseName(:posBlank-2) // '.dat'  ! Hopefully remove trailing _
      call RuntimeParameters_set('stats_file',io_statsFileName)
