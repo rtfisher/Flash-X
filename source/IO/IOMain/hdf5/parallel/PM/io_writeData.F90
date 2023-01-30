@@ -819,6 +819,10 @@ subroutine io_writeData(fileID)
       deallocate (faceXBuf)
       deallocate (globalFaceXMin)
       deallocate (globalFaceXMax)
+      
+      if (NDIM .gt. 1) then
+         deallocate (faceYBuf)
+         deallocate (globalFaceYMin)
          deallocate (globalFaceYMax)
       end if
 
