@@ -21,6 +21,10 @@ PAPI_PATH  =
 PAPI_FLAGS =
 LIB_NCMPI = /usr
 MA28_PATH = /nfs/gce/projects/FLASH5/software/ma28
+SZ_PATH    =  /nfs/gce/projects/FLASH5/software/sz_install
+SZ3_PATH    =  /nfs/gce/projects/FLASH5/software/sz3_install
+ZFP_PATH   =  /nfs/gce/projects/FLASH5/software/zfp_install
+H5Z_PATH   =  /nfs/gce/projects/FLASH5/software/h5zzfp_install
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
@@ -64,6 +68,10 @@ FFLAGS_HYPRE = -I${HYPRE_PATH}/include
 CFLAGS_HYPRE = -I${HYPRE_PATH}/include
 FFLAGS_AMREX = -I${AMREX_PATH}/include
 FFLAGS_MILHOJA = -I${MILHOJA_PATH}/include -fexceptions
+FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_SZ3    = -I${SZ3_PATH}/include
+FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
+
 
 F90FLAGS =
 
@@ -81,6 +89,9 @@ CFLAGS_HDF5 = -DH5_USE_18_API -I$(HDF5_PATH)/include
 CFLAGS_NCMPI = -I$(LIB_NCMPI)/include
 CFLAGS_AMREX = -I${AMREX_PATH}/include
 CFLAGS_MILHOJA =
+CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_SZ3    = -I${SZ3_PATH}/include
+CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 
 
@@ -126,6 +137,10 @@ LIB_MA28 = -L$(MA28_PATH)/lib -lma28
 # AMReX, we have to manually list AMReX afterward so that the linker finds
 # the dependencies.
 LIB_MILHOJA = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread -lamrex -lstdc++
+LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ3    = -L${SZ3_PATH}/lib -DUSE_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
+
 
 # Uncomment the following line to use electic fence memory debugger.
 # Need the following environmental variable (see env.sh):

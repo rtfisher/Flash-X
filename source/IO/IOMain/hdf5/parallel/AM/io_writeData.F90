@@ -95,8 +95,12 @@ subroutine io_writeData(fileID)
                       io_faceZVarLabels, io_comm, io_splitNumBlks, io_plotfileMetadataDP, &
                       io_plotfileGridQuantityDP, io_fileFormatVersion, &
                       io_meshMe, io_acrossMe, io_acrossNumProcs, io_unklabelsGlobal, io_unkNonRep, &
-                      tree_data_t, io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, &
-                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr
+                      tree_data_t,  io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible, &
+                      io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr, &
+                      io_sz_norm, io_sz_abs_and_rel, io_zfp_accuracy_plt, io_zfp_precision_plt, &
+                      io_zfp_rate_plt, io_zfp_reversible_plt, &
+                      io_sz_abs_error_plt, io_sz_rel_error_plt, io_sz_pw_rel_error_plt, io_sz_psnr_plt, &
+                      io_sz_norm_plt, io_sz_abs_and_rel_plt
 
    use io_intfTypesModule, ONLY: io_fileID_t
 
@@ -143,8 +147,11 @@ subroutine io_writeData(fileID)
 
    integer :: localNumBlocks, blockID
    integer :: i, lb, j, u, AllocateStatus
-   integer :: dowrite, compression_type
-   real, save :: compression_val
+   integer :: dowrite, compression_type, compression_type_plt
+   real, save :: compression_val, compression_val2
+
+   real, save :: compression_val_plt, compression_val2_plt
+   
    integer, allocatable :: procnumber(:)
 
    ! allocate storage to hold a single variable information
@@ -203,9 +210,18 @@ subroutine io_writeData(fileID)
    nullify (scratch)
 
 
+
 !! set compression values
-#ifdef FLASH_HDF5_SZ
-   if (io_sz_abs_error > 0.0) then
+#if (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3)
+   if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 6
+   else if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. .not. io_sz_abs_and_rel) then
+     compression_val = io_sz_abs_error
+     compression_val2 = io_sz_rel_error
+     compression_type = 7
+   else if (io_sz_abs_error > 0.0) then
      compression_val = io_sz_abs_error
      compression_type = 1
    else if (io_sz_rel_error > 0.0) then
@@ -217,6 +233,34 @@ subroutine io_writeData(fileID)
    else if (io_sz_psnr > 0.0) then
      compression_val = io_sz_psnr
      compression_type = 4
+   else if (io_sz_norm > 0.0) then
+     compression_val = io_sz_norm
+     compression_type = 5
+   endif
+
+! Plot file related
+   if (io_sz_abs_error_plt > 0 .and. io_sz_rel_error_plt > 0 .and. io_sz_abs_and_rel_plt) then
+     compression_val_plt = io_sz_abs_error_plt
+     compression_val2_plt = io_sz_rel_error_plt
+     compression_type_plt = 6
+   else if (io_sz_abs_error_plt > 0 .and. io_sz_rel_error_plt > 0 .and. .not. io_sz_abs_and_rel_plt) then
+     compression_val_plt = io_sz_abs_error_plt
+     compression_val2_plt = io_sz_rel_error_plt
+     compression_type_plt = 7
+   else if (io_sz_abs_error_plt > 0.0) then
+     compression_val_plt = io_sz_abs_error_plt
+     compression_type_plt = 1
+   else if (io_sz_rel_error_plt > 0.0) then
+     compression_val_plt = io_sz_rel_error_plt
+     compression_type_plt = 2
+   else if (io_sz_pw_rel_error_plt > 0.0) then
+     compression_val_plt = io_sz_pw_rel_error_plt
+     compression_type_plt = 3
+   else if (io_sz_psnr_plt > 0.0) then
+     compression_val_plt = io_sz_psnr_plt
+     compression_type_plt = 4
+     compression_val_plt = io_sz_norm_plt
+     compression_type_plt = 5
    endif
 #endif
 
@@ -233,8 +277,24 @@ subroutine io_writeData(fileID)
    else if (io_zfp_reversible > 0.0) then
      compression_val = io_zfp_reversible
      compression_type = 104
+   endif
+
+! Plot file related
+   if (io_zfp_accuracy_plt > 0.0) then
+     compression_val_plt = io_zfp_accuracy_plt
+     compression_type_plt = 101
+   else if (io_zfp_precision_plt > 0.0) then
+     compression_val_plt = io_zfp_precision_plt
+     compression_type_plt = 102
+   else if (io_zfp_rate_plt > 0.0) then
+     compression_val_plt = io_zfp_rate_plt
+     compression_type_plt = 103
+   else if (io_zfp_reversible_plt > 0.0) then
+     compression_val_plt = io_zfp_reversible_plt
+     compression_type_plt = 104
   endif
 #endif
+
 
   !! call the generic function prepareLists to allocate and
   !! fill the runtime parameter lists and the scalar lists
@@ -410,6 +470,7 @@ subroutine io_writeData(fileID)
                                         localOffset, &
                                         compression_type, &
                                         compression_val, &
+                                        compression_val2, &                                 
                                         dowrite)
             else
                call io_h5write_unknowns(io_globalMe, &
@@ -426,6 +487,7 @@ subroutine io_writeData(fileID)
                                         localOffset, &
                                         compression_type, &
                                         compression_val, &
+                                        compression_val2, &
                                         dowrite)
             end if
          else
@@ -446,7 +508,8 @@ subroutine io_writeData(fileID)
                                            localOffset, &
                                         compression_type, &
                                         compression_val, &
-                                           dowrite)
+                                        compression_val2, &
+                                        dowrite)
                else
                   spMax = real(globalVarMax(u), kind=single)
                   spMin = real(globalVarMin(u), kind=single)
@@ -462,6 +525,9 @@ subroutine io_writeData(fileID)
                                               localNumBlocks, &
                                               io_splitNumBlks, &
                                               localOffset, &
+                                              compression_type_plt, &
+                                              compression_val_plt, &
+                                              compression_val2_plt, &                                              
                                               dowrite)
                end if
             end if
@@ -520,6 +586,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 
          else
@@ -542,6 +609,9 @@ subroutine io_writeData(fileID)
                                         localNumBlocks, &
                                         io_splitNumBlks, &
                                         localOffset, &
+                                        compression_type_plt, &
+                                        compression_val_plt, &
+                                        compression_val2_plt, &                                        
                                         dowrite)
 
          end if
@@ -614,6 +684,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 
 #if NDIM >= 2
@@ -646,6 +717,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 #endif
 
@@ -679,6 +751,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 #endif
          end do
@@ -722,6 +795,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 #if NDIM >= 2
             call Grid_getTileIterator(itor, ALL_BLKS, tiling=.FALSE.); lb = 1
@@ -749,6 +823,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 #endif
 
@@ -778,6 +853,7 @@ subroutine io_writeData(fileID)
                                      localOffset, &
                                      compression_type, &
                                      compression_val, &
+                                     compression_val2, &
                                      dowrite)
 #endif
          end do
