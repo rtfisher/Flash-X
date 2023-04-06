@@ -122,7 +122,7 @@ if __name__ == "__main__":
     Heater.rcdAngle = 45.0
     Heater.velContact = 0.2
     Heater.nucWaitTime = 0.2
-    Heater.nucSeedRadius = 0.1
+    Heater.nucSeedRadius = 0.2 # 0.1 before
 
     # Number of nucleation sites
     Heater.numSites = 600
