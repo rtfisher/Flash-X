@@ -11,8 +11,7 @@ endif
 #----------------------------------------------------------------------------
 
 MPI_PATH   = ${OLCF_OMPI_ROOT}
-AMREX_DIR=/gpfs/alpine/ast136/world-shared/sw/summit/gcc/11.1.0
-AMREX_PATH = ${AMREX_DIR}/amrex-3d-flash-x
+AMREX_PATH = /gpfs/alpine/csc300/world-shared/gnu_build/amrex/build_3d/installdir
 HDF5_PATH  = ${OLCF_HDF5_ROOT}
 HYPRE_PATH = ${OLCF_HYPRE_ROOT}
 CUDA_PATH  = ${OLCF_CUDA_ROOT}
