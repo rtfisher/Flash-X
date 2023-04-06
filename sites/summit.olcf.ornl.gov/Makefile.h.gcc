@@ -112,11 +112,9 @@ FFLAGS_OPT   = -c ${OPT_FLAGS}
 FFLAGS_TEST  = -c ${TEST_FLAGS}
 FFLAGS_DEBUG = -c ${DEBUG_FLAGS} -fcheck=bounds,do,mem,pointer -ffpe-trap=invalid,zero,overflow -fbacktrace
 
-F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -cpp
-# F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -fallow-argument-mismatch -cpp
+F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -fallow-argument-mismatch -cpp
 f90FLAGS     = ${F90FLAGS}
-F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -cpp
-# F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -fallow-argument-mismatch -cpp
+F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -fallow-argument-mismatch -cpp
 f77FLAGS     = ${F77FLAGS}
 
 FFLAGS_AMREX = -I${AMREX_PATH}/include
