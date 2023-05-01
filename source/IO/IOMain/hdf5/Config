@@ -2,7 +2,48 @@ LIBRARY HDF5
 
 DEFAULT serial
 
-USESETUPVARS parallelIO, IO, IOWriteGridFiles
+USESETUPVARS parallelIO, IO, IOWriteGridFiles, HDF5ZFP, HDF5SZ, HDF5SZ3
+
+IF HDF5ZFP
+  LIBRARY ZFP
+  PARAMETER zfp_accuracy REAL 0.0
+  PARAMETER zfp_rate REAL 0.0
+  PARAMETER zfp_precision REAL 0.0
+  PARAMETER zfp_reversible REAL 0.0
+
+  PARAMETER zfp_accuracy_plt REAL 0.0
+  PARAMETER zfp_rate_plt REAL 0.0
+  PARAMETER zfp_precision_plt REAL 0.0
+  PARAMETER zfp_reversible_plt REAL 0.0
+ENDIF
+
+IF HDF5SZ
+  LIBRARY SZ
+  PARAMETER sz_abs_error REAL 0.0
+  PARAMETER sz_rel_error REAL 0.0
+  PARAMETER sz_pw_rel_error REAL 0.0
+  PARAMETER sz_psnr REAL 0.0
+
+  PARAMETER sz_abs_error_plt REAL 0.0
+  PARAMETER sz_rel_error_plt REAL 0.0
+  PARAMETER sz_pw_rel_error_plt REAL 0.0
+  PARAMETER sz_psnr_plt REAL 0.0
+ENDIF
+
+IF HDF5SZ3
+  LIBRARY SZ3
+  PARAMETER sz_abs_error REAL 0.0
+  PARAMETER sz_rel_error REAL 0.0
+  PARAMETER sz_psnr REAL 0.0
+  PARAMETER sz_norm REAL 0.0
+  PARAMETER sz_abs_and_rel_error BOOLEAN FALSE
+
+  PARAMETER sz_abs_error_plt REAL 0.0
+  PARAMETER sz_rel_error_plt REAL 0.0
+  PARAMETER sz_psnr_plt REAL 0.0
+  PARAMETER sz_norm_plt REAL 0.0
+  PARAMETER sz_abs_and_rel_error_plt BOOLEAN FALSE
+ENDIF
 
 IF IOWriteGridFiles
   REQUIRES IO/IOMain/hdf5/writeGrid

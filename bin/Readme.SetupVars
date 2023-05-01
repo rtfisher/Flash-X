@@ -56,7 +56,7 @@ USEFUL VARIABLES
 
 * Name  : IO
   Type  : String
-  Values: hdf5, pnetcdf, MPIHybrid, MPIDump, direct
+  Values: hdf5, pnetcdf, MPIHybrid, MPIDump, direct, zfp, sz, sz3
 
   Selects what kind of IO to use. 
 

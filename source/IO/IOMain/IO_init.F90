@@ -94,6 +94,49 @@ subroutine IO_init()
 
   call Driver_getComm(GLOBAL_COMM,io_globalComm)
 
+#ifdef FLASH_HDF5_ZFP
+  call RuntimeParameters_get('zfp_accuracy', io_zfp_accuracy)
+  call RuntimeParameters_get('zfp_precision', io_zfp_precision)
+  call RuntimeParameters_get('zfp_rate', io_zfp_rate)
+  call RuntimeParameters_get('zfp_reversible', io_zfp_reversible)
+
+  call RuntimeParameters_get('zfp_accuracy_plt', io_zfp_accuracy_plt)
+  call RuntimeParameters_get('zfp_precision_plt', io_zfp_precision_plt)
+  call RuntimeParameters_get('zfp_rate_plt', io_zfp_rate_plt)
+  call RuntimeParameters_get('zfp_reversible_plt', io_zfp_reversible_plt)
+
+#endif
+
+#ifdef FLASH_HDF5_SZ
+  call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
+  call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
+  call RuntimeParameters_get('sz_pw_rel_error', io_sz_pw_rel_error)
+  call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+
+  call RuntimeParameters_get('sz_abs_error_plt', io_sz_abs_error_plt)
+  call RuntimeParameters_get('sz_rel_error_plt', io_sz_rel_error_plt)
+  call RuntimeParameters_get('sz_pw_rel_error_plt', io_sz_pw_rel_error_plt)
+  call RuntimeParameters_get('sz_psnr_plt', io_sz_psnr_plt)  
+#endif
+
+#ifdef FLASH_HDF5_SZ3
+  call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
+  call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
+  call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+  call RuntimeParameters_get('sz_norm', io_sz_norm)
+  if ((io_sz_abs_error > 0) .AND. (io_sz_rel_error > 0)) then
+      call RuntimeParameters_get('sz_abs_and_rel_error', io_sz_abs_and_rel)
+  endif
+
+  call RuntimeParameters_get('sz_abs_error_plt', io_sz_abs_error_plt)
+  call RuntimeParameters_get('sz_rel_error_plt', io_sz_rel_error_plt)
+  call RuntimeParameters_get('sz_psnr_plt', io_sz_psnr_plt)
+call RuntimeParameters_get('sz_norm_plt', io_sz_norm_plt)
+  if ((io_sz_abs_error_plt > 0) .AND. (io_sz_rel_error_plt > 0)) then
+      call RuntimeParameters_get('sz_abs_and_rel_error_plt', io_sz_abs_and_rel_plt)
+  endif  
+#endif
+
   call RuntimeParameters_get('alwaysRestrictCheckpoint', io_alwaysRestrictCheckpoint)
   call RuntimeParameters_get('alwaysComputeUserVars', io_alwaysComputeUserVars)
   call RuntimeParameters_get('ignoreForcedPlot', io_ignoreForcedPlot)
