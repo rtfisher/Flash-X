@@ -1,24 +1,19 @@
-# Flash-X makefile definitions for GCE with Intel compilers
-# This Makefile is temporary and is being used to develop and test the
-# integration of the Milhoja Grid implementation.
+# Flash-X makefile definitions for using the Intel compiler suite
+# tested with intel/17.0.4 and intel-mpi/2017.3
+#   $ module load intel/17.0.4-74uvhji intel-mpi/2017.3-dfphq6k
 #
-# Users need to set their own values of AMREX_PATH and MILHOJA_PATH.
-
 #----------------------------------------------------------------------------
 # Set the AMReX library path -- manual installation for multiple variants
 #----------------------------------------------------------------------------
-AMREX_PATH=$(FLASHX_DATA_REPO)/gce/intel_current/AMReX_$(NDIM)D
-MILHOJA_PATH=$(FLASHX_DATA_REPO)/gce/intel_current/Milhoja_$(NDIM)D_sandybridge_intel_mpich_debug
+# AMREX_PATH   =
+# MILHOJA_PATH =
 
 #----------------------------------------------------------------------------
 # Set the HDF5/MPI library paths
 #----------------------------------------------------------------------------
-HYPRE_PATH =
-ZLIB_PATH  =
-PAPI_PATH  =
-PAPI_FLAGS =
-LIB_NCMPI  =
-MA28_PATH  =
+MPI_PATH   = ${I_MPI_ROOT}/intel64
+HDF4_PATH  =
+HDF5_PATH  = /lcrc/project/Flash-X/soft/intel_17.04/hdf5/1.12.2
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
@@ -26,10 +21,10 @@ MA28_PATH  =
 #   Use the parallel HDF5 wrappers which use the mpiXX compiler wrappers 
 #   -- these will automatically load the proper libraries and include files.
 #----------------------------------------------------------------------------
-FCOMP   = h5pfc
-CCOMP   = h5pcc
-CPPCOMP = mpicxx
-LINK    = h5pfc
+FCOMP   = ${HDF5_PATH}/bin/h5pfc
+CCOMP   = ${HDF5_PATH}/bin/h5pcc
+CPPCOMP = ${MPI_PATH}/bin/mpiicpc    # hdf5 CXX wrapper isn't installed
+LINK    = ${HDF5_PATH}/bin/h5pfc
 
 # pre-processor flag
 PP      = -D
@@ -46,6 +41,8 @@ PP      = -D
 #  (ex. FFLAGS) to the proper set of flags (ex. FFLAGS_OPT).
 #----------------------------------------------------------------------------
 
+OPENMP = -qopenmp
+
 FFLAGS_OPT = -c -O2 -r8 -real-size 64 -check uninit
 FFLAGS_DEBUG = -ggdb -c -O0 -r8 -real-size 64 \
 	-warn all -diag-disable 10120 \
@@ -56,12 +53,8 @@ FFLAGS_DEBUG = -ggdb -c -O0 -r8 -real-size 64 \
 FFLAGS_TEST = -O1 -c -r8 -real-size 64 \
 	 -stand f18 -no-wrap-margin \
 	 -fminshared -assume buffered_stdout
-FFLAGS_HYPRE = -I${HYPRE_PATH}/include
-CFLAGS_HYPRE = -I${HYPRE_PATH}/include
-FFLAGS_AMREX = -I${AMREX_PATH}/include
-FFLAGS_MILHOJA = -I${MILHOJA_PATH}/include -fexceptions
 
-F90FLAGS = -DHAVE_MPI_MODULE -DH5_USE_18_API
+F90FLAGS = -DHAVE_MPI_MODULE
 
 #The macro _FORTIFY_SOURCE adds some lightweight checks for buffer
 #overflows at both compile time and run time (only active at -O1 or higher)
@@ -74,10 +67,12 @@ CFLAGS_DEBUG = -ggdb -c -O0 -Wundef \
 	-fp-stack-check
 CFLAGS_TEST = -c
 
-CFLAGS_HDF5    = -DH5_USE_18_API
-CFLAGS_NCMPI   = -I$(LIB_NCMPI)/include
-CFLAGS_AMREX   = -I${AMREX_PATH}/include
-CFLAGS_MILHOJA =
+# CFLAGS_NCMPI   = -I$(LIB_NCMPI)/include
+# CFLAGS_AMREX   =
+# CFLAGS_MILHOJA =
+# FFLAGS_HYPRE   = -I${HYPRE_PATH}/include
+# CFLAGS_HYPRE   = -I${HYPRE_PATH}/include
+# FFLAGS_AMREX   = -I${AMREX_PATH}/include
 
 #----------------------------------------------------------------------------
 # Linker flags
@@ -107,25 +102,16 @@ LIB_OPT   =
 LIB_DEBUG =
 LIB_TEST  =
 
-LIB_HDF5  =
+LIB_HDF5  = -L ${HDF5_PATH}/lib -lhdf5 -DH5_USE_18_API
 LIB_PAPI  =
 LIB_MATH  =
 LIB_MPI   =
 LIB_MPE   =
-LIB_HYPRE = -L$(HYPRE_PATH)/lib -lHYPRE
-LIB_AMREX = -L${AMREX_PATH}/lib -lamrex -lpthread
 LIB_STDCXX = -lstdc++
-LIB_LAPACK= -llapack -lblas
-LIB_MA28 = -L$(MA28_PATH)/lib -lma28
-# setup tool presently lists AMReX before Milhoja.  Since Milhoja depends on
-# AMReX, we have to manually list AMReX afterward so that the linker finds
-# the dependencies.
-LIB_MILHOJA = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread -lamrex
+LIB_LAPACK = -llapack -lblas
 
-# Uncomment the following line to use electic fence memory debugger.
-# Need the following environmental variable (see env.sh):
-# export EF_ALLOW_MALLOC_0=1
-#CONFIG_LIB = -L/usr/lib64 -lefence
+# LIB_HYPRE = -L$(HYPRE_PATH)/lib -lHYPRE
+# LIB_AMREX = -L${AMREX_PATH}/lib -lamrex -lpthread
 
 #----------------------------------------------------------------------------
 # Additional machine-dependent object files
