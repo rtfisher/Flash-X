@@ -73,12 +73,9 @@ FFLAGS_AMREX = -I${AMREX_PATH}/include
 # don't need to know this.  The setup tool could add in a WARNING so that they
 # are made aware.  Similarly, it would need to add -Mrecursive for NVHPC.
 FFLAGS_MILHOJA = -I${MILHOJA_PATH}/include -fexceptions -auto
-<<<<<<< HEAD:sites/gce/Makefile.h.Intel
 FFLAGS_SZ    = -I${SZ_PATH}/include
 FFLAGS_SZ3    = -I${SZ3_PATH}/include
 FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
-=======
->>>>>>> main:sites/gce/Makefile.h.Intel.testEnv
 
 F90FLAGS = -DHAVE_MPI_MODULE -DH5_USE_18_API
 
