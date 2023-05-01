@@ -105,7 +105,7 @@ if __name__ == "__main__":
     Heater = SimpleNamespace()
   
     # Heater name and number of heaters
-    Heater.name = "pool_boiling"
+    Heater.name = "test_io_3d"
     Heater.dim = 2 
     Heater.xmin = -5.0
     Heater.xmax = 5.0
