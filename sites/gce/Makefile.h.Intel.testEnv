@@ -24,7 +24,7 @@ MA28_PATH = ${FLASHX_MA28_DIR}
 SZ_PATH     =  ${FLASHX_SZ_DIR}
 SZ3_PATH    =  ${FLASHX_SZ3_DIR}
 ZFP_PATH   =   ${FLASHX_ZFP_DIR}
-H5Z_PATH   =  ${FLASHX_H5ZZFP_DIR}
+H5Z_PATH   =   ${FLASHX_H5ZZFP_DIR}
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
