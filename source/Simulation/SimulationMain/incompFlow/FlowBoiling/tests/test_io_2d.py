@@ -107,8 +107,8 @@ if __name__ == "__main__":
     # Heater name and number of heaters
     Heater.name = "test_io_2d"
     Heater.dim = 1
-    Heater.xmin = -20.0
-    Heater.xmax = 20.0
+    Heater.xmin = -24.0
+    Heater.xmax = 24.0
     Heater.zmin = -2.5
     Heater.zmax = 2.5
     Heater.ymin = 0.0
