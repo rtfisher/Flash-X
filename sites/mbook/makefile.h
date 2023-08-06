@@ -13,12 +13,12 @@ endif
 #----------------------------------------------------------------------------
 # Set the HDF5/MPI library paths -- managed by loading with Spack 
 #----------------------------------------------------------------------------
-HDF5_PATH = /opt/homebrew/Cellar/hdf5-mpi/1.12.2_1/
+HDF5_PATH = /opt/homebrew/Cellar/hdf5-mpi/1.14.1/
 HYPRE_PATH = 
 ZLIB_PATH  =
 PAPI_PATH  =
 PAPI_FLAGS =
-LIB_NCMPI = /opt/homebrew/Cellar/hdf5-mpi/1.12.2_1/
+LIB_NCMPI = /opt/homebrew/Cellar/hdf5-mpi/1.14.1/
 SZ_PATH    = /Users/mbook/install/sz
 SZ3_PATH    = /Users/mbook/install/sz3
 ZFP_PATH   = /Users/mbook/install/zfp/
