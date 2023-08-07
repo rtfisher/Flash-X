@@ -366,7 +366,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 
 
 
-/*  TRY_AND_CHECK_IGNORE( H5Fflush(*file_identifier,H5F_SCOPE_GLOBAL) , "H5Fflush" ) */
+  TRY_AND_CHECK_IGNORE( H5Fflush(*file_identifier,H5F_SCOPE_GLOBAL) , "H5Fflush" )
 
   H5Pclose(dataset_plist);
 
