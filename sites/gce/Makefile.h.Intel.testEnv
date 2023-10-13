@@ -34,8 +34,8 @@ H5Z_PATH   =   ${FLASHX_H5ZZFP_DIR}
 #----------------------------------------------------------------------------
 FCOMP   = h5pfc
 CCOMP   = h5pcc
-CPPCOMP = mpicxx
-LINK    = h5pfc
+CPPCOMP = mpicxx -std=c++17
+LINK    = h5pfc -std=c++17
 
 # pre-processor flag
 PP      = -D
@@ -133,6 +133,7 @@ LIB_MPI   =
 LIB_MPE   =
 LIB_HYPRE = -L$(HYPRE_PATH)/lib -lHYPRE
 LIB_AMREX = -L${AMREX_PATH}/lib -lamrex -lpthread
+LIB_BITTREE =
 LIB_STDCXX = -lstdc++
 LIB_LAPACK= -llapack -lblas
 LIB_MA28 = -L$(MA28_PATH) -lma28
