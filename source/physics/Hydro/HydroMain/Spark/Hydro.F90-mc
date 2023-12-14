@@ -25,6 +25,7 @@
 #define DEBUG_HYDRO
 #define DEBUG_HYDRO_OFFLOADING
 #endif
+#define DEBUG_GRID_GCMASK
 
 subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
 
@@ -34,11 +35,13 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
                          hy_threadWithinBlock
 
   use Hydro_data, ONLY : hy_fluxCorrect, hy_fluxCorrectPerLevel,hy_gcMask,&
+       hy_eosModeGc,&
        hy_lChyp, hy_C_hyp, hy_geometry,hy_del, hy_tiny, hy_hybridRiemann, hy_maxCells
   use Hydro_data, ONLY : klim,lim,limgc,gCells,dir,stage
 
   use hy_rk_interface, ONLY : hy_rk_getFaceFlux, hy_rk_getGraveAccel, hy_rk_updateSoln, hy_rk_correctFluxes
   use Timers_interface, ONLY : Timers_start, Timers_stop
+  use Logfile_interface, ONLY : Logfile_stampVarMask
   use Grid_interface, ONLY : Grid_communicateFluxes, &
        Grid_fillGuardCells, Grid_getMaxRefinement, &
        Grid_correctFluxData_xtra, Grid_putFluxData, Grid_putFluxData_block, &
@@ -79,6 +82,12 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
 
   @M hy_declare_scr_ptr
 
+#ifdef DEBUG_GRID_GCMASK
+  logical,save :: gcMaskLogged =.FALSE.
+#else
+  logical,parameter :: gcMaskLogged =.TRUE.
+#endif
+
   integer :: lev
 
   integer :: max_edge, max_edge_y, max_edge_z,space
@@ -108,8 +117,9 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
   call IO_setScalar("C_hyp", hy_lChyp)
 #endif
 
-  if(hy_telescoping) &
-       call Grid_fillGuardCells(CENTER,ALLDIR,doEos=.false.,maskSize=NUNK_VARS,mask=hy_gcMask)
+  if(hy_telescoping) then
+     @M hy_globalFillGuardCells
+  end if
   !-------------------------------------------------------------------!
   !***NO Flux correction    or   Flux correction but NOT per level****!
   !-------------------------------------------------------------------!
@@ -117,24 +127,27 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
   stage=1
   if ((.NOT.hy_fluxCorrect).OR.((hy_fluxCorrect).AND.(.NOT.hy_fluxCorrectPerLevel))) then
      @M hy_stages_nt !! this is the do loop statement for non-telescoping version
-     if(.NOT.hy_telescoping) &
-          call Grid_fillGuardCells(CENTER,ALLDIR,doEos=.false.,maskSize=NUNK_VARS,mask=hy_gcMask)
+     if(.NOT.hy_telescoping) then
+        @M hy_globalFillGuardCells
+     end if
      nullify(Uin)
      @M iter_all_begin(LEAF,.false.,blkLimits,blkLimitsGC,hy_del)
 
         if (hy_geometry /= CARTESIAN) then
            @M hy_fill_geom
-           @M hy_DIR_TARGET_enter_data(to, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol,      &&
+           @M hy_DIR_TARGET_enter_data(to, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol,      \
                                        hy_xCenter, hy_xLeft, hy_xRight, hy_yCenter, hy_zCenter])
         endif
 
         @M hy_map_tmp_states
         @M hy_map_scr_ptrs
-        @M hy_DIR_TARGET_enter_data(alloc, [hy_starState, hy_tmpState, &&
-                                     hy_flx, hy_fly, hy_flz, &&
+        @M hy_DIR_TARGET_enter_data(alloc, [hy_starState, hy_tmpState, \
+                                     hy_flx, hy_fly, hy_flz, \
                                      hy_fluxBufX, hy_fluxBufY, hy_fluxBufZ])
 
-        ng=NGUARD-1
+        !Set needed number of guard cells to update based on first stage
+        !for telescoping update; relevant for shockDetect below
+        ng=hy_limitsArray(1)
         @M hy_setLims(ng)
 
         @M hy_DIR_TARGET_enter_data(to, [Uin])
@@ -145,7 +158,9 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
 
         ! AH: TODO : OpenMP directives for hy_calcDivB
         @M hy_calcDivB
-        if (hy_telescoping .OR. stage==1) call shockDetect(Uin,limits,blkLimitsGC)
+        if (hy_telescoping .OR. stage==1) then
+           call shockDetect(Uin,limits,blkLimitsGC)
+        end if
 
         call Timers_start("Offloaded Section")
         call Timers_start("scratch")
@@ -176,7 +191,7 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
            call hy_rk_getGraveAccel(hy_starState, hy_del, limits, blkLimitsGC)
 
            !Set needed number of guard cells to update based on
-           !current stage for telescoping upda
+           !current stage for telescoping update
            ng=hy_limitsArray(stage)
            @M hy_setLims(ng)
            @M hy_DIR_TARGET_update_to([limits])
@@ -223,7 +238,7 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
 
         @M hy_end_stages_t
         if (hy_geometry /= CARTESIAN) then
-           @M hy_DIR_TARGET_exit_data(release, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol,      &&
+           @M hy_DIR_TARGET_exit_data(release, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol,      \
                                             hy_xCenter, hy_xLeft, hy_xRight, hy_yCenter, hy_zCenter])
            @M hy_release_geom
         end if
@@ -236,8 +251,8 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
                                  blkLimits(LOW,:))
         end if
         call Timers_stop("Offloaded Section")
-        @M hy_DIR_TARGET_exit_data(release, [hy_starState, hy_tmpState, &&
-                                         hy_flx, hy_fly, hy_flz, &&
+        @M hy_DIR_TARGET_exit_data(release, [hy_starState, hy_tmpState, \
+                                         hy_flx, hy_fly, hy_flz, \
                                          hy_fluxBufX, hy_fluxBufY, hy_fluxBufZ])
         @M hy_release_tmp_states
         @M hy_release_scr_ptrs
@@ -297,15 +312,15 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
            yLo = blkLimits(LOW,JAXIS); yHi = blkLimits(HIGH,JAXIS)
            zLo = blkLimits(LOW,KAXIS); zHi = blkLimits(HIGH,KAXIS)
 
-           ng=NGUARD-1
+           ng=hy_limitsArray(1)
            @M hy_setLims(ng)
            @M hy_DIR_TARGET_update_to([hy_del, grownLimits, blkLimits, blkLimitsGC, limits])
            ! DivB will technically be lagged by 1 step, but we need ghost zones to
            ! compute the gradients. I ain't doing more communication for a diagnostic...
            @M hy_map_tmp_states
            @M hy_map_scr_ptrs
-           @M hy_DIR_TARGET_enter_data(alloc, [hy_starState, hy_tmpState, &&
-                                           hy_flx, hy_fly, hy_flz, &&
+           @M hy_DIR_TARGET_enter_data(alloc, [hy_starState, hy_tmpState, \
+                                           hy_flx, hy_fly, hy_flz, \
                                            hy_fluxBufX, hy_fluxBufY, hy_fluxBufZ])
 
            @M hy_calcDivB
@@ -372,14 +387,14 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
               call Timers_start("updateSoln")
               if (hy_geometry /= CARTESIAN) then
                  @M hy_fill_geom
-                 @M hy_DIR_TARGET_enter_data(to, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol, &&
+                 @M hy_DIR_TARGET_enter_data(to, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol, \
                                               hy_xCenter, hy_xLeft, hy_xRight, hy_yCenter, hy_zCenter])
               endif
 
               call hy_rk_updateSoln(hy_starState,hy_tmpState,blkLimits,blklimitsGC,hy_del, dt, dtOld, limits, hy_coeffs)
               @M hy_DIR_TARGET_update_from([hy_starState])
               if (hy_geometry /= CARTESIAN) then
-                 @M hy_DIR_TARGET_exit_data(release, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol, &&
+                 @M hy_DIR_TARGET_exit_data(release, [hy_fareaX, hy_fareaY, hy_fareaZ, hy_cvol, \
                                                   hy_xCenter, hy_xLeft, hy_xRight, hy_yCenter, hy_zCenter])
                  @M hy_release_geom
               end if
@@ -413,8 +428,8 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
                                     hy_fluxBufZ, &
                                     blkLimits(LOW,:))
            end if
-           @M hy_DIR_TARGET_exit_data(release, [hy_starState, hy_tmpState, &&
-                                            hy_flx, hy_fly, hy_flz, &&
+           @M hy_DIR_TARGET_exit_data(release, [hy_starState, hy_tmpState, \
+                                            hy_flx, hy_fly, hy_flz, \
                                             hy_fluxBufX, hy_fluxBufY, hy_fluxBufZ])
            @M hy_release_scr_ptrs
            @M hy_DIR_TARGET_exit_data(release, [Uin])
@@ -428,6 +443,9 @@ subroutine Hydro(timeEndAdv, dt, dtOld, sweepOrder)
 
   @M hy_DIR_TARGET_exit_data(release, [grownLimits, blkLimits, blkLimitsGC, limits])
 
+#ifdef DEBUG_GRID_GCMASK
+  gcMaskLogged = .TRUE.
+#endif
   call Timers_stop("Hydro")
 
 contains
@@ -473,7 +491,7 @@ contains
     delta= 0.1  !0.1 !2. ! divV
 
 
-    !! Allocate a temporary cell-centered array for sound speed
+    !! Use hy_Vc as a temporary cell-centered array for sound speed
 
 
     !! Compute sound speed
@@ -489,7 +507,7 @@ contains
     @M hy_DIR_parallel_loop_simd(3) &
     @M hy_DIR_private([SW1, SW2, minP, minC, divv, gradPx, gradPy, gradPz]) &
     @M hy_DIR_shared([limits, Uin, hy_Vc, beta, delta])
-    @M loop_3d(limits)
+    @M loop_3d_ext(limits,1,1,1)
     ! initialize switch values
     SW1 = .false.
     SW2 = .false.
