@@ -105,7 +105,7 @@ if __name__ == "__main__":
     Heater = SimpleNamespace()
   
     # Heater name and number of heaters
-    Heater.name = "test_io_3d"
+    Heater.name = "pool_boiling"
     Heater.dim = 2 
     Heater.xmin = -5.0
     Heater.xmax = 5.0
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     Heater.rcdAngle = 45.0
     Heater.velContact = 0.2
     Heater.nucWaitTime = 0.2
-    Heater.nucSeedRadius = 0.2 # 0.1 before
+    Heater.nucSeedRadius = 0.1
 
     # Number of nucleation sites
     Heater.numSites = 600
