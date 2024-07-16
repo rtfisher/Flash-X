@@ -1,0 +1,23 @@
+#	Config file for the INS module.
+#       Note: This is a staggered finite difference mesh algorithm.
+
+REQUIRES physics/IncompNS/IncompNSMain/varDens
+REQUIRES physics/IncompNS/IncompNSExtras
+
+REQUIRES physics/Multiphase/MultiphaseEvap
+
+REQUIRES physics/HeatAD/HeatADMain/varDiffusion
+REQUIRES physics/HeatAD/HeatADAdvection
+
+REQUIRES Simulation/SimulationForcing/incompFlow/Heater
+
+USESETUPVARS SimForceInOut
+
+IF SimForceInOut
+    REQUIRES Simulation/SimulationForcing/incompFlow/Inlet
+    REQUIRES Simulation/SimulationForcing/incompFlow/Outlet/phaseForcing
+ENDIF
+
+DATAFILES *_hdf5_htr_*
+
+DATAFILES test_fc72.par single_bubble.par multiple_bubbles.par

@@ -1,0 +1,14 @@
+#	Equation of state unit
+
+#	Eos/EosMain/Gamma	- Perfect-gas equation of state
+#	Eos/EosMain/Multigamma	- Mixture of perfect gases with different gammas
+#	Eos/EosMain/Helmholtz	- Timmes' high-temperature eos using interpolation
+#			          from a Helmholtz free energy table
+
+
+
+DEFAULT EosMain
+
+CHILDORDER localAPI
+
+
