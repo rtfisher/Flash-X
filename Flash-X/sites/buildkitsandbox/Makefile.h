@@ -94,7 +94,8 @@ CFLAGS_NCMPI = -I$(LIB_NCMPI)/include
 #  _DEBUG, and _TEST cases.
 #----------------------------------------------------------------------------
 
-LFLAGS_OPT   = -ggdb -fcommon -Wl,-ld_classic -o 
+LFLAGS_OPT   = -ggdb -fcommon -o
+#-Wl,-ld_classic -o 
 LFLAGS_DEBUG = -ggdb -O0 -o
 LFLAGS_TEST  = -ggdb -o
 
