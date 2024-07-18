@@ -46,7 +46,7 @@ PP      = -D
 #----------------------------------------------------------------------------
 
 FFLAGS_OPT = -ggdb -c -O2 -fdefault-real-8 -fdefault-double-8 \
--Wuninitialized -fallow-argument-mismatch -I${HDF5_PATH}/include -fcommon \
+-Wuninitialized -Wno-argument-mismatch -I${HDF5_PATH}/include -fcommon \
 
 FFLAGS_DEBUG = -ggdb -c -O0 -fdefault-real-8 -fdefault-double-8 \
 -pedantic -Wall -Wextra -Waliasing \
