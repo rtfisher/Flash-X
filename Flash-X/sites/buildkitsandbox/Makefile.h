@@ -14,7 +14,7 @@ PAPI_FLAGS  =
 LIB_NCMPI   = 
 MPE_PATH    =
 #MPI_PATH    = /usr/local/openmpi-4.1.5/bin/
-MPI_PATH=/usr/local/openmpi-4.1.6/bin
+MPI_PATH=/usr/lib/mpi/bin
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
