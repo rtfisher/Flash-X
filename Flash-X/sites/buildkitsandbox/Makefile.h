@@ -53,10 +53,10 @@ FFLAGS_DEBUG = -ggdb -c -O0 -fdefault-real-8 -fdefault-double-8 \
 -Wsurprising -Wconversion -Wunderflow \
 -ffpe-trap=invalid,zero,overflow -fbounds-check \
 -fimplicit-none -fstack-protector-all \
--fallow-argument-mismatch -I${HDF5_PATH}/include
+-Wno-argument-mismatch -I${HDF5_PATH}/include
 
 FFLAGS_TEST = -ggdb -c -fdefault-real-8 -fdefault-double-8 \
--ffree-line-length-none -fallow-argument-mismatch -I${HDF5_PATH}/include
+-ffree-line-length-none -Wno-argument-mismatch -I${HDF5_PATH}/include
 
 FFLAGS_HYPRE = -I${HYPRE_PATH}/include
 
