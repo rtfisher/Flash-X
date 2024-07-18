@@ -5,8 +5,9 @@
 
 #HDF5_PATH   = /usr/local/hdf5-1.10.10
 #HDF5_PATH=/usr/local/hdf5-1.14.4.2
-HDF5_PATH_INC=/usr/include/hdf5/openmpi
-HDF5_PATH_LIB=/usr/lib/x86_64-linux-gnu/hdf5/serial
+HDF5_PATH_INC=/usr/lib/aarch64-linux-gnu/hdf5/openmpi/lib/include
+#/usr/include/hdf5/openmpi
+HDF5_PATH_LIB=/usr/lib/aarch64-linux-gnu/hdf5/openmpi
 
 ZLIB_PATH   =
 
