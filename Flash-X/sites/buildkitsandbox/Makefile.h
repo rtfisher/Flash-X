@@ -4,7 +4,9 @@
 #----------------------------------------------------------------------------
 
 #HDF5_PATH   = /usr/local/hdf5-1.10.10
-HDF5_PATH=/usr/local/hdf5-1.14.4.2
+#HDF5_PATH=/usr/local/hdf5-1.14.4.2
+HDF5_PATH_INC=/usr/include/hdf5/serial
+HDF5_PATH_LIB=/usr/lib/x86_64-linux-gnu/hdf5/serial
 
 ZLIB_PATH   =
 
@@ -46,17 +48,17 @@ PP      = -D
 #----------------------------------------------------------------------------
 
 FFLAGS_OPT = -ggdb -c -O2 -fdefault-real-8 -fdefault-double-8 \
--Wuninitialized -Wno-argument-mismatch -I${HDF5_PATH}/include -fcommon \
+-Wuninitialized -Wno-argument-mismatch -I${HDF5_PATH_INC} -fcommon \
 
 FFLAGS_DEBUG = -ggdb -c -O0 -fdefault-real-8 -fdefault-double-8 \
 -pedantic -Wall -Wextra -Waliasing \
 -Wsurprising -Wconversion -Wunderflow \
 -ffpe-trap=invalid,zero,overflow -fbounds-check \
 -fimplicit-none -fstack-protector-all \
--Wno-argument-mismatch -I${HDF5_PATH}/include
+-Wno-argument-mismatch -I${HDF5_PATH_INC}
 
 FFLAGS_TEST = -ggdb -c -fdefault-real-8 -fdefault-double-8 \
--ffree-line-length-none -Wno-argument-mismatch -I${HDF5_PATH}/include
+-ffree-line-length-none -Wno-argument-mismatch -I${HDF5_PATH_INC}
 
 FFLAGS_HYPRE = -I${HYPRE_PATH}/include
 
@@ -80,7 +82,7 @@ CFLAGS_TEST = -c
 CDEFINES += -DDarwin
 
 # if we are using HDF5, we need to specify the path to the include files
-CFLAGS_HDF5 = -I${HDF5_PATH}/include
+CFLAGS_HDF5 = -I${HDF5_PATH_INC}
 
 CFLAGS_NCMPI = -I$(LIB_NCMPI)/include
 
@@ -111,8 +113,8 @@ LIB_OPT   =
 LIB_DEBUG =
 LIB_TEST  =
 
-#LIB_HDF5  = -L${HDF5_PATH}/lib -lhdf5 /usr/lib64/libz.a
-LIB_HDF5  = -L${HDF5_PATH}/lib -lhdf5 
+#LIB_HDF5  = -L${HDF5_PATH_LIB} -lhdf5 /usr/lib64/libz.a
+LIB_HDF5  = -L${HDF5_PATH_LIB} -lhdf5 
 
 LIB_PAPI  =
 LIB_MATH  =
