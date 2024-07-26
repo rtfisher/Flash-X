@@ -1,4 +1,4 @@
-# FLASH makefile definitions for x86-64 Linux (GNU compilers)
+# FLASH makefile definitions for x86-64 and arm Linux for Docker (GNU compilers)
 #----------------------------------------------------------------------------
 # Set the HDF5/MPI library paths -- these need to be updated for your system
 #----------------------------------------------------------------------------
@@ -21,12 +21,6 @@ else
     $(error Unsupported architecture: $(UNAME_M))
 endif
 
-#HDF5_PATH   = /usr/local/hdf5-1.10.10
-#HDF5_PATH=/usr/local/hdf5-1.14.4.2
-#HDF5_PATH_INC=/usr/lib/aarch64-linux-gnu/hdf5/openmpi/lib/include
-#/usr/include/hdf5/openmpi
-#HDF5_PATH_LIB=/usr/lib/aarch64-linux-gnu/hdf5/openmpi
-
 ZLIB_PATH   =
 
 PAPI_PATH   =
@@ -34,7 +28,6 @@ PAPI_FLAGS  =
 
 LIB_NCMPI   = 
 MPE_PATH    =
-#MPI_PATH    = /usr/local/openmpi-4.1.5/bin/
 MPI_PATH=/usr/bin
 
 #----------------------------------------------------------------------------
