@@ -3,11 +3,29 @@
 # Set the HDF5/MPI library paths -- these need to be updated for your system
 #----------------------------------------------------------------------------
 
+# Detect the architecture
+UNAME_M := $(shell uname -m)
+
+# Define default paths
+HDF5_PATH_INC =
+HDF5_PATH_LIB =
+
+# Set paths based on architecture
+ifeq ($(UNAME_M), x86_64)
+    HDF5_PATH_INC = /usr/lib/x86_64-linux-gnu/hdf5/openmpi/include
+    HDF5_PATH_LIB = /usr/lib/x86_64-linux-gnu/hdf5/openmpi
+else ifeq ($(UNAME_M), aarch64)
+    HDF5_PATH_INC = /usr/lib/aarch64-linux-gnu/hdf5/openmpi/include
+    HDF5_PATH_LIB = /usr/lib/aarch64-linux-gnu/hdf5/openmpi
+else
+    $(error Unsupported architecture: $(UNAME_M))
+endif
+
 #HDF5_PATH   = /usr/local/hdf5-1.10.10
 #HDF5_PATH=/usr/local/hdf5-1.14.4.2
-HDF5_PATH_INC=/usr/lib/aarch64-linux-gnu/hdf5/openmpi/lib/include
+#HDF5_PATH_INC=/usr/lib/aarch64-linux-gnu/hdf5/openmpi/lib/include
 #/usr/include/hdf5/openmpi
-HDF5_PATH_LIB=/usr/lib/aarch64-linux-gnu/hdf5/openmpi
+#HDF5_PATH_LIB=/usr/lib/aarch64-linux-gnu/hdf5/openmpi
 
 ZLIB_PATH   =
 
