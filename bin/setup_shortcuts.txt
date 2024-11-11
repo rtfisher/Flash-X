@@ -244,3 +244,9 @@ incomp:Incomp=True:IOWriteGridFiles=True:InsPresLaplacian=False:InsForceInOut=Tr
 
 # Profiler shortcuts
 hpctoolkit:Profiler=Hpctoolkit:--with-unit=monitors/Profiler/ProfilerMain/hpctoolkit
+
+# Turbulence stirring (driving, forcing) and/initial conditions
+stir:--with-unit=physics/sourceTerms/Stir/StirMain
+stir_ics:--with-unit=physics/sourceTerms/StirICs/StirICsMain
+stir_amr:--with-unit=physics/sourceTerms/Stir/StirMain/AMR
+stir_injection:--with-unit=physics/sourceTerms/Stir/StirMain/InjectionRate

@@ -56,9 +56,10 @@
 !! the new and old values of variables compare, we can conclude that
 !! MODE_DENS_TEMP works too, and hence the unit test is successful.
 !!
-!! A final test calculates the optional derivates by setting the mask
-!! argument to Eos equal to true.  The values of these arguments are not
-!! tested in any way.  The unitTest simply makes sure that they can be calculated
+!! A final test calculates the optional derivates by calling
+!! eos_helmSpecies directly with the optional derivs argument present.
+!! The values returned in this argument are not tested in any way.
+!! The unitTest simply makes sure that they can be calculated
 !! without NaNs or the like.  This Helmholtz version writes out two
 !! randomly selected variables to the checkpoint files for
 !! visualization.  It's kludgy, but the user can change which
@@ -76,9 +77,9 @@
 !!
 !!  PARAMETERS
 !!
-!!  eintSwitch  a rarely used switch which ensures that internal energy calculations 
-!!        maintain sufficient precision. Important only if energyTotal is dominated 
-!!        by energyKinetic.
+!!  eintSwitch  a switch which ensures that internal energy calculations
+!!        maintain sufficient precision. Important only if energyTotal
+!!        is dominated by energyKinetic.
 !!
 !!  eos_testTolerance
 !!      tolerance for relative errors in Eos results
@@ -155,10 +156,6 @@ subroutine Eos_unitTest(fileUnit, perfect)
      ap => a
   end if
 
-! info for checkpoint output
-
-
-!!  mask = .true.
 
   call Grid_getTileIterator(itor, LEAF, tiling=.FALSE.)
   do while(itor%isValid())

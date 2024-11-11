@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import os, sys, string, re, time, shutil, types, glob, socket, math
+import os, sys, string, re, time, shutil, types, glob, socket, math, importlib
 
-import parseCmd, lazyFile
+import parseCmd, lazyFile, createParfile, unitMods
 import globals
 from globals import *   # GVars and SetupError
 from utils import *     # Assorted little cute functions
@@ -301,6 +301,30 @@ def main():
     # if no flash.par copy default.par over
     if not os.path.isfile('flash.par'):
        shutil.copy(globals.RPDefaultParFilename, 'flash.par')
+
+    # generate parfile and input file from toml file instead
+    if GVars.tomlfile:
+       try:
+           toml = importlib.import_module("toml")
+       except:
+           raise SetupError("Cannot import toml library in your python environment. Cannot use tomlfile option")
+
+       if GVars.parfile:
+           GVars.out.put("Appending parfile with contents from tomlfile")
+       else:
+           GVars.out.put("Generating parfile with contents from tomlfile")
+
+       try:
+           GVars.tomlDict = toml.load(GVars.tomlfile)
+       except toml.decoder.TomlDecodeError as e:
+           raise SetupError(f"Error when parsing tomlfile: line {e.lineno} at column {e.colno}.")
+
+       createParfile.main(GVars)
+
+    # Call unit modules to run preprocessing scripts
+    if GVars.withUnitMods:
+        GVars.out.put("Executing setup modules for individual units")
+        unitMods.main(GVars,unitList)
 
     # create the successfile
     ofd = open(globals.SuccessFilename,"w")

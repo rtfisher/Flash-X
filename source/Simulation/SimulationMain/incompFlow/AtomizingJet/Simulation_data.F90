@@ -41,5 +41,6 @@ module Simulation_data
 
    real, save :: sim_jetCoords(MDIM) = (/0, 0, 0/), sim_jetRadius = 0.5
    real, save :: sim_jetVel = 1.0
+   real, save :: sim_jetFreq, sim_jetAmp
 
 end module Simulation_data

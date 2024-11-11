@@ -1,4 +1,4 @@
-!!****if* source/Simulation/SimulationMain/incompFlow/CrossFlow/Simulation_init
+!!****if* source/Simulation/SimulationMain/incompFlow/RisingBubble/Simulation_init
 !! NOTICE
 !!  Copyright 2022 UChicago Argonne, LLC and contributors
 !!
@@ -33,11 +33,16 @@
 !!***
 
 #include "constants.h"
+#include "Simulation.h"
 
 subroutine Simulation_init()
 
-   use Simulation_data
-   use Driver_interface, ONLY: Driver_getMype, Driver_abort
+   use Driver_interface, ONLY: Driver_getMype
+   use Simulation_data, ONLY: sim_xMin, sim_yMin, &
+                              sim_xMax, sim_yMax, &
+                              sim_zMin, sim_zMax, &
+                              sim_meshMe, sim_initAmplitude, sim_initEta
+
    use RuntimeParameters_interface, ONLY: RuntimeParameters_get
 
    implicit none
@@ -46,19 +51,11 @@ subroutine Simulation_init()
 
    call RuntimeParameters_get('xmin', sim_xMin)
    call RuntimeParameters_get('ymin', sim_yMin)
+   call RuntimeParameters_get('zmin', sim_zMin)
    call RuntimeParameters_get('xmax', sim_xMax)
    call RuntimeParameters_get('ymax', sim_yMax)
-   call RuntimeParameters_get('zmin', sim_zmin)
-   call RuntimeParameters_get('zmax', sim_zmax)
-
-   call RuntimeParameters_get('ins_gravX', sim_gravX)
-   call RuntimeParameters_get('ins_gravY', sim_gravY)
-   call RuntimeParameters_get('ins_gravZ', sim_gravZ)
-
-   if (sim_meshMe .eq. MASTER_PE) then
-      write (*, *) 'sim_gravX =', sim_gravX
-      write (*, *) 'sim_gravY =', sim_gravY
-      write (*, *) 'sim_gravZ =', sim_gravZ
-   end if
+   call RuntimeParameters_get('zmax', sim_zMax)
+   call RuntimeParameters_get("sim_initAmplitude", sim_initAmplitude)
+   call RuntimeParameters_get("sim_initEta", sim_initEta)
 
 end subroutine Simulation_init

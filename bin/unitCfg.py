@@ -758,13 +758,13 @@ class UnitUnion(dict):
                else:
                   self['GUARDCELLS']= max(unit['GUARDCELLS'], self['GUARDCELLS'])
 
-            if unit['NSCRATCHCENTERVARS']!=None:
-               if self['NSCRATCHCENTERVARS']==None:
-                  self['NSCRATCHCENTERVARS']=unit['NSCRATCHCENTERVARS']
+            if unit['NSCRATCHCENTERVARS'] is not None:
+               if self['NSCRATCHCENTERVARS'] is None:
+                  self['NSCRATCHCENTERVARS'] = unit['NSCRATCHCENTERVARS']
                elif unit['NSCRATCHCENTERVARS'].isdecimal() and self['NSCRATCHCENTERVARS'].isdecimal():
-                  self['NSCRATCHCENTERVARS']= "%s" % max(int(unit['NSCRATCHCENTERVARS']), int(self['NSCRATCHCENTERVARS']))
+                  self['NSCRATCHCENTERVARS'] = "%s" % max(int(unit['NSCRATCHCENTERVARS']), int(self['NSCRATCHCENTERVARS']))
                else:
-                  self['NSCRATCHCENTERVARS']= "max(%s,%s)" % (unit['NSCRATCHCENTERVARS'], self['NSCRATCHCENTERVARS'])
+                  self['NSCRATCHCENTERVARS'] = "max(%s,%s)" % (unit['NSCRATCHCENTERVARS'], self['NSCRATCHCENTERVARS'])
 
             for (prop,prop_type) in list(unit['PARTICLEPROP'].items()):
                 if unit['PARTICLEPROP'].get(prop,prop_type)!=prop_type:

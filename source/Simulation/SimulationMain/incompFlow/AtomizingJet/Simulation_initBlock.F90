@@ -96,8 +96,10 @@ subroutine Simulation_initBlock(solnData, tileDesc)
             yi = yGrid(j)
             zi = zGrid(k)
 
-            Rcell = sim_jetRadius*(1-sign(1., yi-4*sim_jetRadius))/2
-            jetProfile = sqrt((xi-sim_jetCoords(IAXIS))**2+(zi-sim_jetCoords(KAXIS))**2)-Rcell
+            jetProfile = sqrt((xi-sim_jetCoords(IAXIS))**2+&
+                              (yi-sim_jetCoords(JAXIS))**2+&
+                              (zi-sim_jetCoords(KAXIS))**2)-sim_jetRadius
+
             solnData(DFUN_VAR, i, j, k) = jetProfile
 
          end do
