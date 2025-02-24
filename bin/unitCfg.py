@@ -462,7 +462,7 @@ class FlashUnit(dict,preProcess):
     @staticmethod
     def initparseREQUIRES():
         # "REQUIRES" can be followed by a list of potential Units separated by "OR"
-        return [], r'REQUIRES\s+(?P<orList>(?:\S+|\s+OR\s+)+)\s*$'
+        return [], r'REQUIRES\s+(?P<orList>\S+(?:\s+OR\s+\S+)*)\s*$'
 
     def parseREQUIRES(self, mobj):
         def normpath(path):
@@ -478,6 +478,7 @@ class FlashUnit(dict,preProcess):
         units = [normpath(unit) for unit in units if len(unit) > 0]
         # Note that self['REQUIRES'] is a list of lists
         self['REQUIRES'].append(units)
+        GVars.out.put("%s: Storing requirement %s" % (self.name, " OR ".join(units)), globals.DEBUG)
 
     @staticmethod
     def initparseREQUESTS():
@@ -505,9 +506,9 @@ class FlashUnit(dict,preProcess):
                reason = x
         if not ignore: # pretend this was a REQUIRES
            self['REQUIRES'].append([unit])
-           GVars.out.put("Honoring request for %s"%unit,globals.DEBUG)
+           GVars.out.put("%s: Honoring request for %s" % (self.name, unit), globals.DEBUG)
         else:
-           GVars.out.put("Ignoring request for %s (reason: -without-unit=%s)"%(unit,reason),globals.DEBUG)
+           GVars.out.put("%s: Ignoring request for %s (reason: -without-unit=%s)" % (self.name, unit, reason), globals.DEBUG)
 
     @staticmethod
     def initparsePARAMETER():

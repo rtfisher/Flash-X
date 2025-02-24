@@ -42,7 +42,7 @@
 !<
 
 !!Reorder(4): starState, tmpState, fl[xyz]
-!!NOVARIANTS
+!!VARIANTS(GPU): hy_rk_updateSoln, Driver_abort
 
 subroutine hy_rk_updateSoln (stage, starState, tmpState, &
                              grav, flx, fly, flz, &

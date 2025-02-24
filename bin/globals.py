@@ -116,6 +116,9 @@ class IndentedOutput:
     def setDebugLevel(self,level):
         self.debuglevel = level
 
+    def setWrapCol(self,wrap):
+        self.WRAP = wrap
+
     # Return a list of strings so that each string has length
     # <= wrap and consist of full words only. If one word is too
     # long it may be an entry in the list
@@ -220,6 +223,7 @@ class GVarsClass:
     """Stores Global variables (visible to most of the code). Also includes parsed version of
     command line options"""
     out          = IndentedOutput()  # pretty printer
+    wrapcol      = None
     setupVars    = SetupVarsClass() # handles setup variables
     indexReorder = False  # reorder indices in unk or not
 

@@ -30,6 +30,11 @@ IF HDF5SZ3
   PPDEFINE FLASH_HDF5_SZ3
 ENDIF
 
+USESETUPVARS Milhoja
+IF Milhoja
+  REQUESTS Driver/DriverMain/GPU
+ENDIF
+
 EXCLUSIVE Split Unsplit Incomp
 
 REQUIRES RuntimeParameters

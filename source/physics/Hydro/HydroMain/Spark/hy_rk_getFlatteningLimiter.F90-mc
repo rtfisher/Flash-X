@@ -30,7 +30,7 @@
 !<
 
 !!Reorder(4): starState
-!!NOVARIANTS
+!!VARIANTS(GPU): hy_rk_getFlatteningLimiter
 
 subroutine hy_rk_getFlatteningLimiter(stage, starState, flat3d, limits, loGC)
 

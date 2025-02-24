@@ -140,7 +140,7 @@ subroutine Stir(dt, pass)
     dvol = del(IAXIS) * del(JAXIS) * del(KAXIS)
 #endif
 
-    @M loop_3d(blkLimits)
+    @M loop_3d(blkLimits, i, j, k)
       ! cell mass
       dmass = Uin(DENS_VAR,i,j,k)*dvol
       ! mass
@@ -213,7 +213,7 @@ subroutine Stir(dt, pass)
       call st_stir_get_turb_vector_unigrid_c(pos_beg, pos_end, ncells, accx, accy, accz)
     endif
 
-    @M loop_3d(blkLimits)
+    @M loop_3d(blkLimits, i, j, k)
 
       kk = k-blkLimits(LOW,KAXIS)+1 ! z index of accx, accy, accz starts at 1 and goes to NZB
       jj = j-blkLimits(LOW,JAXIS)+1 ! y index of accx, accy, accz starts at 1 and goes to NYB
@@ -286,7 +286,7 @@ subroutine Stir(dt, pass)
 #endif
 ! ifndef CORRECT_BULK_MOTION
 
-    @M loop_3d(blkLimits)
+    @M loop_3d(blkLimits, i, j, k)
 
       kk = k-blkLimits(LOW,KAXIS)+1 ! z index of accx, accy, accz starts at 1 and goes to NZB
       jj = j-blkLimits(LOW,JAXIS)+1 ! y index of accx, accy, accz starts at 1 and goes to NYB

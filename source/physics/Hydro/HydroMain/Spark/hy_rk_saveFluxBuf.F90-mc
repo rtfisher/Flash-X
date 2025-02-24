@@ -32,7 +32,7 @@
 !<
 
 !!Reorder(4): fl[xyz], fluxBuf[XYZ]
-!!NOVARIANTS
+!!VARIANTS(GPU): hy_rk_saveFluxBuf
 
 subroutine hy_rk_saveFluxBuf(stage, fluxBufX, fluxBufY, fluxBufZ, &
                              flx, fly, flz, &
@@ -68,7 +68,7 @@ subroutine hy_rk_saveFluxBuf(stage, fluxBufX, fluxBufY, fluxBufZ, &
    @M hy_DIR_parallel_loop_simd(3) &
    @M hy_DIR_TARGET_map(to, [weights]) &
    @M hy_DIR_shared([blkLimits, weights, stage, wt, fluxBufX, flx, fareaX])
-   @M loop_3d_plus(blkLimits,1,0,0)
+   @M loop_3d_plus(blkLimits,i,j,k,1,0,0)
       do v = 1, NFLUXES
          @M hy_saveFluxBuf(fluxBufX, fareaX, flx)
       end do
@@ -78,7 +78,7 @@ subroutine hy_rk_saveFluxBuf(stage, fluxBufX, fluxBufY, fluxBufZ, &
    @M hy_DIR_parallel_loop_simd(3) &
    @M hy_DIR_TARGET_map(to, [weights]) &
    @M hy_DIR_shared([blkLimits, weights, stage, wt, fluxBufY, fly, fareaY])
-   @M loop_3d_plus(blkLimits,0,1,0)
+   @M loop_3d_plus(blkLimits,i,j,k,0,1,0)
       do v = 1, NFLUXES
          @M hy_saveFluxBuf(fluxBufY, fareaY, fly)
       end do
@@ -89,7 +89,7 @@ subroutine hy_rk_saveFluxBuf(stage, fluxBufX, fluxBufY, fluxBufZ, &
    @M hy_DIR_parallel_loop_simd(3) &
    @M hy_DIR_TARGET_map(to, [weights]) &
    @M hy_DIR_shared([blkLimits, weights, stage, wt, fluxBufZ, flz, fareaZ])
-   @M loop_3d_plus(blkLimits,0,0,1)
+   @M loop_3d_plus(blkLimits,i,j,k,0,0,1)
       do v = 1, NFLUXES
          @M hy_saveFluxBuf(fluxBufZ, fareaZ, flz)
       end do

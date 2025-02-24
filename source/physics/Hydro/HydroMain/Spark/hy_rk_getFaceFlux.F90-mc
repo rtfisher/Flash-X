@@ -38,7 +38,7 @@
 !! @param loGC            Lower indices including guard cells
 !<
 
-!!NOVARIANTS
+!!VARIANTS(GPU): hy_rk_getFaceFlux
 !!Reorder(4):starState,fl[xyz]
 !!Reorder(4):scr_rope,scr_flux,scr_uPlus,scr_uMinus
 

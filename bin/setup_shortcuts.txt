@@ -41,6 +41,8 @@ pnetcdf:IO=pnetcdf:
 hdf5TypeIO:+io:+parallelIO:+hdf5:typeIO=True
 hdf5AsyncIO:+parallelIO:+asynchdf5
 pnetTypeIO:+io:+parallelIO:+pnetcdf:typeIO=True
+# unifyfs
+unifyFS:+io:+parallelIO:+hdf5:unifyFS=True
 
 # other optional but useful stuff
 nolog:-without-unit=monitors/Logfile:
@@ -56,6 +58,15 @@ amrex:Grid=Amrex:-unit=Grid/GridMain/AMR/Amrex:-index-reorder
 mh_grid:Grid=Milhoja:-unit=Grid/GridMain/AMR/Milhoja:-with-unofficial=Grid/GridMain/AMR/Milhoja:-index-reorder:Milhoja=AMReX
 # Using the Milhoja library only for the Orchestration implementation: (also needs Milhoja=...)
 mh_orch:-unit=Orchestration/OrchestrationMain/Milhoja:-with-unofficial=Orchestration/OrchestrationMain/Milhoja:-index-reorder
+
+#Using Eos in variants mode
+eoshelmCPU:-with-unit=physics/Eos/EosMain/NULL:-with-unit=physics/Eos/EosMain/Helmholtz/NULL
+eosgamCPU: -with-unit=physics/Eos/EosMain/CPU:-with-unit=physics/Eos/EosMain/Gamma/CPU 
+eoswlCPU: -with-unit=physics/Eos/EosMain/NULL:-with-unit=physics/Eos/EosMain/WeakLib/NULL
+
+eoshelmGPU:-with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/Helmholtz/GPU
+eosgamGPU: -with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/Gamma/GPU
+eoswlGPU: -with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/WeakLib/GPU
 
 ### For execute-style ORCHA ### (needs libmilhoja or libmilhoja_grid)
 # Using the Milhoja library for Grid and Orchestration implementations, CPU tt config only:
@@ -198,6 +209,7 @@ spark:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf
 sparkbase1d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-1d:
 sparkbase2d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-2d:+sqr16
 sparkbase3d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-3d:+cube16
+sparkGLM:+spark:useGLM=True:useTVD=True
 # for future
 spark3:--with-unit=physics/Hydro/HydroMain/Spark/rk3:Spark=True:+nolwf
 sparklwf:--with-unit=physics/Hydro/HydroMain/Spark:NoLevelwideFluxes=False

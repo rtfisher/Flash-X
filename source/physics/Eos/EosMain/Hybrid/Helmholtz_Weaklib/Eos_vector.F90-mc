@@ -20,7 +20,7 @@
 !! @subref{Eos_vector}
 !!
 !!
-!!NOVARIANTS
+!!
 subroutine Eos_vector(mode, vecLen, eosData, massFrac,derivs)
    use eos_localInterface, only: eos_helmSpecies, eos_weaklib
 

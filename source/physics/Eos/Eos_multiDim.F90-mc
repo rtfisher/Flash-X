@@ -47,18 +47,19 @@
 !!  @param solnData(:,:,:,:) is pointer to the array where
 !!          all the data is located
 !!
+!!REORDER(4): solnData
 !!NOVARIANTS
 
 
-subroutine Eos_multiDim(mode,range,solnData)
-  
+subroutine Eos_multiDim(mode,range,lo,solnData)
+
   implicit none
 
 #include "constants.h"
-#include "FortranLangFeatures.fh"
 
   integer, intent(in) :: mode
   integer, dimension(2,MDIM), intent(in) :: range
-  real, POINTER_INTENT_IN :: solnData(:,:,:,:)
+  integer, intent(in) :: lo(MDIM)
+  real,dimension(1:,lo(1):,lo(2):,lo(3):),intent(inout) :: solnData
 end subroutine Eos_multiDim
 

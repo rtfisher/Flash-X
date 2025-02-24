@@ -588,6 +588,9 @@ CPPCOMP=tau_cxx.sh -tau_makefile=$(TAU_MAKEFILE) -tau_options=$(TAU_OPTIONS)"""
     makefiles = glob.glob('Makefile.*')
     #FIXME remove this once all those makefile dependencies are fixed.
     makefiles.sort()
+    # injecting Makefile.Milhoja for Milhoja-generated files
+    if GVars.setupVars.get("Milhoja"):
+        makefiles.append("Makefile.Milhoja")
     ", ".join(makefiles)
 
     try:

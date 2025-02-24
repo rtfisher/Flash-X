@@ -28,9 +28,8 @@
 !!
 !!      Supported boundary conditions are isolated (0) and
 !!      periodic (1).  The same boundary conditions are applied
-!!      in all directions.  For some implementation of Gravity,
-!!      in particular with Barnes-Hut tee solver, additional combinations
-!!      of boundary conditions may be supported.
+!!      in all directions.  For some implementations of Gravity,
+!!      additional combinations of boundary conditions may be supported.
 !!
 !! ARGUMENTS
 !!
@@ -164,9 +163,11 @@ subroutine Gravity_potential( potentialIndex)
   
   if(.not.updateGravity) return
 
+#ifdef USEBARS
   call Timers_start("gravity Barrier")
   call MPI_Barrier (grv_meshComm, ierr)
   call Timers_stop("gravity Barrier")
+#endif
 
   call Timers_start("gravity")
 

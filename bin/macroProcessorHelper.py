@@ -1,8 +1,11 @@
 # from unitUtils import *
-from macroProcessor import macroProcessor, makeVariantName
+from macroProcessor import macroProcessor, makeVariantName, variantLineProcessor
+
+from collections import defaultdict
 import subprocess
 import shutil
 import os
+import re
 
 fortran_exts = [".F90", ".f90", ".F", ".f"]
 
@@ -61,6 +64,10 @@ def generateVariants(unitDir, objDir, defsList, varList, macroOnly=False):
             outfile = makeVariantName(filebase, var, removeSuffix(ext, "-mc"))
             outpath = os.path.join(objDir, outfile)
             processMcFile(m, f, outpath, macroOnly)
+            # processing "!!VARIANTS(var): subroutines" line
+            if var.lower() != "null":
+                varLine = variantLineProcessor(outfile, outfile, var)
+                varLine.process()
 
     # convert files with no variants
     m = macroProcessor()
