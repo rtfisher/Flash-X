@@ -17,7 +17,6 @@
 !!***
 #include "constants.h"
 subroutine IncompNS_divergence(solnData, facexData, faceyData, facezData, del, lo, hi)
-!-----------------------------------------------------------------------------------------
    implicit none
    real, pointer, dimension(:, :, :, :) :: solnData, facexData, faceyData, facezData
    integer, dimension(MDIM) :: lo, hi
