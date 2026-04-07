@@ -1,8 +1,6 @@
-"""Script to create input files"""
+"""Script to create a heater HDF5 fixture for the FlowBoiling IO test."""
 
-import numpy
 import h5py
-from scipy.stats import qmc
 from types import SimpleNamespace
 
 def createHeaterfile(heaterInfo):
@@ -11,36 +9,24 @@ def createHeaterfile(heaterInfo):
     """
     filename = h5py.File(heaterInfo["name"] + "_hdf5_htr_0001", "w")
 
-    xsite = numpy.ndarray([heaterInfo["numSites"]], dtype=float)
-    ysite = numpy.ndarray([heaterInfo["numSites"]], dtype=float)
-    zsite = numpy.ndarray([heaterInfo["numSites"]], dtype=float)
-    radii = numpy.ndarray([heaterInfo["numSites"]], dtype=float)
+    nsites = heaterInfo["numSites"]
+    xsite = [0.0] * nsites
+    ysite = [1.0e-13] * nsites
+    zsite = [0.0] * nsites
+    radii = [0.2] * nsites
 
-    if heaterInfo["numSites"] == 1:
-        xsite[:] = 0.0
-        ysite[:] = 1e-13
-        zsite[:] = 0.0
-        radii[:] = 0.2
-
-    else:
-
-        halton = qmc.Halton(d=2, seed=1)
-        haltonSample = halton.random(heaterInfo["numSites"])
-
-        xsite[:] = heaterInfo["xmin"] + haltonSample[:, 0] * (
-            heaterInfo["xmax"] - heaterInfo["xmin"]
-        )
-        ysite[:] = 1e-13
-        radii[:] = 0.2
-
-        if heaterInfo["dim"] == 1:
-            zsite[:] = 0.0
-        elif heaterInfo["dim"] == 2:
-            zsite[:] = heaterInfo["zmin"] + haltonSample[:, 1] * (
-                heaterInfo["zmax"] - heaterInfo["zmin"]
-            )
-        else:
-            raise ValueError("Error in Heater.dim")
+    if nsites > 1:
+        xspan = heaterInfo["xmax"] - heaterInfo["xmin"]
+        zspan = heaterInfo["zmax"] - heaterInfo["zmin"]
+        for i in range(nsites):
+            frac = i / (nsites - 1)
+            xsite[i] = heaterInfo["xmin"] + frac * xspan
+            if heaterInfo["dim"] == 1:
+                zsite[i] = 0.0
+            elif heaterInfo["dim"] == 2:
+                zsite[i] = heaterInfo["zmin"] + frac * zspan
+            else:
+                raise ValueError("Error in Heater.dim")
 
     filename.create_dataset(
         "heater/xMin", data=heaterInfo["xmin"], shape=(1), dtype="float32"
@@ -105,7 +91,7 @@ if __name__ == "__main__":
     Heater = SimpleNamespace()
   
     # Heater name and number of heaters
-    Heater.name = "test_io_2d"
+    Heater.name = "flow_boiling"
     Heater.dim = 1
     Heater.xmin = -24.0
     Heater.xmax = 24.0

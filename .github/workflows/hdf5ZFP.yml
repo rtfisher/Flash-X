@@ -85,11 +85,17 @@ jobs:
           echo $mydir
           cd object
           export H5_DIR=/home/runner/work/Flash-X/Flash-X/hdf5
-          export LD_LIBRARY_PATH=$VOL_DIR/src:$H5_DIR/install/lib:$LD_LIBRARY_PATH
+          cat >> flash.par <<'EOF'
+          checkpointFileIntervalTime = 0.05
+          plotfileIntervalTime = 0.05
+          zfp_accuracy = 1.0e-6
+          zfp_accuracy_plt = 1.0e-6
+          EOF
+          export LD_LIBRARY_PATH=$mydir/zfp/install/lib:$mydir/H5Z-ZFP/install/lib:$H5_DIR/install/lib:$LD_LIBRARY_PATH
           export HDF5_PLUGIN_PATH="$mydir/H5Z-ZFP/install/plugin"        
           mpiexec -np 2 ./flashx    
           ls -ltrh *chk*
           head -n 21 *.log
-          tail -n 200 *.log          
-          #h5ls -v filename
-          #h5diff -v -d 0.001 sedov_hdf5_chk_0010 ../sedov8_zfp/sedov_hdf5_chk_0010 pres          
+          tail -n 200 *.log
+          $H5_DIR/install/bin/h5dump -pH *_hdf5_chk_0000 | grep -q 'H5Z-ZFP'
+          $H5_DIR/install/bin/h5dump -pH *_hdf5_plt_cnt_0000 | grep -q 'H5Z-ZFP'

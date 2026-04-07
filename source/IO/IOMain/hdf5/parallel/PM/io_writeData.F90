@@ -191,10 +191,18 @@ subroutine io_writeData(fileID)
                          libType = IO_FILE_HDF5
    integer :: numFileBlks
 
+   compression_type = 0
+   compression_type_plt = 0
+   compression_val = 0.0
+   compression_val2 = 0.0
+   compression_val_plt = 0.0
+   compression_val2_plt = 0.0
+
 !! set compression values
 !! compression_type(_plt) encoding:
 !!   0   = no compression
-!!   1-5 = SZ/SZ3 abs, rel, pw-rel, psnr, norm
+!!   1-3 = SZ/SZ3 abs, rel, pw-rel
+!!   4-5 = SZ3 norm, psnr
 !!   6-7 = SZ3 abs-and-rel, abs-or-rel
 !!   101-104 = ZFP accuracy, precision, rate, reversible
 #if (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3)
@@ -217,10 +225,10 @@ subroutine io_writeData(fileID)
      compression_type = 3
    else if (io_sz_psnr > 0.0) then
      compression_val = io_sz_psnr
-     compression_type = 4
+     compression_type = 5
    else if (io_sz_norm > 0.0) then
      compression_val = io_sz_norm
-     compression_type = 5
+     compression_type = 4
    endif
 
 ! Plot file related
@@ -243,10 +251,10 @@ subroutine io_writeData(fileID)
      compression_type_plt = 3
    else if (io_sz_psnr_plt > 0.0) then
      compression_val_plt = io_sz_psnr_plt
-     compression_type_plt = 4
+     compression_type_plt = 5
    else if (io_sz_norm_plt > 0.0) then
      compression_val_plt = io_sz_norm_plt
-     compression_type_plt = 5
+     compression_type_plt = 4
    endif
 #endif
 
