@@ -6,42 +6,68 @@ USESETUPVARS parallelIO, IO, IOWriteGridFiles, HDF5ZFP, HDF5SZ, HDF5SZ3
 
 IF HDF5ZFP
   LIBRARY ZFP
+  D zfp_accuracy Absolute error tolerance for checkpoint-file ZFP compression.
   PARAMETER zfp_accuracy REAL 0.0
+  D zfp_rate Target rate for checkpoint-file ZFP compression.
   PARAMETER zfp_rate REAL 0.0
+  D zfp_precision Bit precision for checkpoint-file ZFP compression.
   PARAMETER zfp_precision REAL 0.0
+  D zfp_reversible Enable reversible checkpoint-file ZFP compression when > 0.
   PARAMETER zfp_reversible REAL 0.0
 
+  D zfp_accuracy_plt Absolute error tolerance for plot-file ZFP compression.
   PARAMETER zfp_accuracy_plt REAL 0.0
+  D zfp_rate_plt Target rate for plot-file ZFP compression.
   PARAMETER zfp_rate_plt REAL 0.0
+  D zfp_precision_plt Bit precision for plot-file ZFP compression.
   PARAMETER zfp_precision_plt REAL 0.0
+  D zfp_reversible_plt Enable reversible plot-file ZFP compression when > 0.
   PARAMETER zfp_reversible_plt REAL 0.0
 ENDIF
 
 IF HDF5SZ
   LIBRARY SZ
+  D sz_abs_error Absolute error bound for checkpoint-file SZ compression.
   PARAMETER sz_abs_error REAL 0.0
+  D sz_rel_error Relative error bound for checkpoint-file SZ compression.
   PARAMETER sz_rel_error REAL 0.0
+  D sz_pw_rel_error Point-wise relative error bound for checkpoint-file SZ compression.
   PARAMETER sz_pw_rel_error REAL 0.0
+  D sz_psnr PSNR target for checkpoint-file SZ compression.
   PARAMETER sz_psnr REAL 0.0
 
+  D sz_abs_error_plt Absolute error bound for plot-file SZ compression.
   PARAMETER sz_abs_error_plt REAL 0.0
+  D sz_rel_error_plt Relative error bound for plot-file SZ compression.
   PARAMETER sz_rel_error_plt REAL 0.0
+  D sz_pw_rel_error_plt Point-wise relative error bound for plot-file SZ compression.
   PARAMETER sz_pw_rel_error_plt REAL 0.0
+  D sz_psnr_plt PSNR target for plot-file SZ compression.
   PARAMETER sz_psnr_plt REAL 0.0
 ENDIF
 
 IF HDF5SZ3
   LIBRARY SZ3
+  D sz_abs_error Absolute error bound for checkpoint-file SZ3 compression.
   PARAMETER sz_abs_error REAL 0.0
+  D sz_rel_error Relative error bound for checkpoint-file SZ3 compression.
   PARAMETER sz_rel_error REAL 0.0
+  D sz_psnr PSNR target for checkpoint-file SZ3 compression.
   PARAMETER sz_psnr REAL 0.0
+  D sz_norm L2 norm error bound for checkpoint-file SZ3 compression.
   PARAMETER sz_norm REAL 0.0
+  D sz_abs_and_rel_error When abs and rel are both set, TRUE selects ABS_AND_REL and FALSE selects ABS_OR_REL.
   PARAMETER sz_abs_and_rel_error BOOLEAN FALSE
 
+  D sz_abs_error_plt Absolute error bound for plot-file SZ3 compression.
   PARAMETER sz_abs_error_plt REAL 0.0
+  D sz_rel_error_plt Relative error bound for plot-file SZ3 compression.
   PARAMETER sz_rel_error_plt REAL 0.0
+  D sz_psnr_plt PSNR target for plot-file SZ3 compression.
   PARAMETER sz_psnr_plt REAL 0.0
+  D sz_norm_plt L2 norm error bound for plot-file SZ3 compression.
   PARAMETER sz_norm_plt REAL 0.0
+  D sz_abs_and_rel_error_plt When abs and rel are both set, TRUE selects ABS_AND_REL and FALSE selects ABS_OR_REL.
   PARAMETER sz_abs_and_rel_error_plt BOOLEAN FALSE
 ENDIF
 

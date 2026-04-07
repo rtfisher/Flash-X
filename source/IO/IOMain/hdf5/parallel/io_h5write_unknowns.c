@@ -58,10 +58,9 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 			       double* compression_val2,
 			       int* dowrite)
 {
-  int rank;
   hid_t dataspace, dataset, memspace, dxfer_template, dataset_plist;
   herr_t status, ierr, herr;
-  hsize_t dimens_4d[4], dimens_5d[5], chunk_dims[4], start_4d[4], stride_4d[4], count_4d[4];
+  hsize_t dimens_4d[4], mem_dims_4d[4], chunk_dims[4], start_4d[4], stride_4d[4], count_4d[4];
   size_t cd_nelmts;
   unsigned int* cd_values = NULL;
   char record_label_new[5];
@@ -90,7 +89,6 @@ void FTOC(io_h5write_unknowns)(int* myPE,
   *(record_label_new + 4) = '\0';
 
   /* set the dimensions of the dataset */
-  rank = 4;
   dimens_4d[0] = *total_blocks;
   dimens_4d[1] = *nzb;
   dimens_4d[2] = *nyb;
@@ -98,7 +96,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
 
   /* printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]); */
 
-  dataspace = H5Screate_simple(rank, dimens_4d, NULL);
+  dataspace = H5Screate_simple(4, dimens_4d, NULL);
   if(dataspace < 0) Driver_abortC("Error: negative return from dataspace H5Screate_simple");
 
   dataset_plist = H5Pcreate(H5P_DATASET_CREATE);
@@ -114,7 +112,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     dataset = H5Dopen(*file_identifier, record_label_new,H5P_DEFAULT); 
 #endif    
     if(dataset < 0) {
-      Driver_abortC("Error: H5Dopen io_h5write_unk\n");
+      Driver_abortC("Error: H5Dopen io_h5write_unknowns\n");
     }
   } else {
     
@@ -128,7 +126,7 @@ void FTOC(io_h5write_unknowns)(int* myPE,
     chunk_dims[1] = *nzb;
     chunk_dims[2] = *nyb;
     chunk_dims[3] = *nxb;
-    H5Pset_chunk(dataset_plist, rank, chunk_dims);
+    H5Pset_chunk(dataset_plist, 4, chunk_dims);
     H5Pset_alloc_time(dataset_plist, H5D_ALLOC_TIME_LATE);
     /* printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]); */
 #endif    
@@ -288,38 +286,21 @@ void FTOC(io_h5write_unknowns)(int* myPE,
       Driver_abortC("Error: unable to select hyperslab for unknowns dataspace");
     }
 
-    /* rank = 5; */
-    /* dimens_5d[0] = *local_blocks; */
-    /* dimens_5d[1] = *nzb; */
-    /* dimens_5d[2] = *nyb; */
-    /* dimens_5d[3] = *nxb; */
-    /* dimens_5d[4] = 1; */
-
-    rank = 4;
-    dimens_5d[0] = *local_blocks;
-    dimens_5d[1] = *nzb;
-    dimens_5d[2] = *nyb;
-    dimens_5d[3] = *nxb;
-    dimens_5d[4] = 1;
+    mem_dims_4d[0] = *local_blocks;
+    mem_dims_4d[1] = *nzb;
+    mem_dims_4d[2] = *nyb;
+    mem_dims_4d[3] = *nxb;
 
     } else {
     /* MPI rank owns zero blocks - create a memory space of
        size 1 so that H5Screate_simple does not abort */
-    /* rank = 5; */
-    /* dimens_5d[0] = 1; */
-    /* dimens_5d[1] = 1; */
-    /* dimens_5d[2] = 1; */
-    /* dimens_5d[3] = 1; */
-    /* dimens_5d[4] = 1; */
-
-    rank = 4;
-    dimens_5d[0] = 1;
-    dimens_5d[1] = 1;
-    dimens_5d[2] = 1;
-    dimens_5d[3] = 1;
+    mem_dims_4d[0] = 1;
+    mem_dims_4d[1] = 1;
+    mem_dims_4d[2] = 1;
+    mem_dims_4d[3] = 1;
   }
 
-  memspace = H5Screate_simple(rank, dimens_5d, NULL);
+  memspace = H5Screate_simple(4, mem_dims_4d, NULL);
   if(memspace < 0) Driver_abortC("Error: negative return from memspace H5Screate_simple");
 
   /* obtain a copy of the file transfer property list */ 

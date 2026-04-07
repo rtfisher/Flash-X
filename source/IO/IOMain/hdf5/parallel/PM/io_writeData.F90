@@ -192,6 +192,11 @@ subroutine io_writeData(fileID)
    integer :: numFileBlks
 
 !! set compression values
+!! compression_type(_plt) encoding:
+!!   0   = no compression
+!!   1-5 = SZ/SZ3 abs, rel, pw-rel, psnr, norm
+!!   6-7 = SZ3 abs-and-rel, abs-or-rel
+!!   101-104 = ZFP accuracy, precision, rate, reversible
 #if (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3)
    if (io_sz_abs_error > 0 .and. io_sz_rel_error > 0 .and. io_sz_abs_and_rel) then
      compression_val = io_sz_abs_error
@@ -239,6 +244,7 @@ subroutine io_writeData(fileID)
    else if (io_sz_psnr_plt > 0.0) then
      compression_val_plt = io_sz_psnr_plt
      compression_type_plt = 4
+   else if (io_sz_norm_plt > 0.0) then
      compression_val_plt = io_sz_norm_plt
      compression_type_plt = 5
    endif

@@ -112,6 +112,7 @@ FFLAGS_TEST  = -c ${TEST_FLAGS}
 FFLAGS_DEBUG = -c ${DEBUG_FLAGS} -fcheck=bounds,do,mem,pointer -ffpe-trap=invalid,zero,overflow -fbacktrace
 
 F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -cpp
+# Legacy fallback for compiler stacks that still require -fallow-argument-mismatch:
 # F90FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -ffree-line-length-none -fallow-argument-mismatch -cpp
 f90FLAGS     = ${F90FLAGS}
 F77FLAGS     = -fdefault-real-8 -fdefault-double-8 -fimplicit-none -cpp
