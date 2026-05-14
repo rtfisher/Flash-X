@@ -260,7 +260,7 @@ void FTOC(io_h5write_unknowns_sp)(int* myPE,
 #endif    
 
     if(dataset < 0) {
-      Driver_abortC("Error: H5Dcreate io_h5write_unk\n");
+      Driver_abortC("Error: H5Dcreate io_h5write_unknowns_sp\n");
     }    
   }
 
