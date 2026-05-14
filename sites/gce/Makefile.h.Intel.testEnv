@@ -24,6 +24,10 @@ PAPI_PATH  =
 PAPI_FLAGS =
 LIB_NCMPI = /usr
 MA28_PATH = ${FLASHX_MA28_DIR}
+SZ_PATH     =  ${FLASHX_SZ_DIR}
+SZ3_PATH    =  ${FLASHX_SZ3_DIR}
+ZFP_PATH   =   ${FLASHX_ZFP_DIR}
+H5Z_PATH   =   ${FLASHX_H5ZZFP_DIR}
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
@@ -72,6 +76,9 @@ FFLAGS_AMREX = -I${AMREX_PATH}/include
 # don't need to know this.  The setup tool could add in a WARNING so that they
 # are made aware.  Similarly, it would need to add -Mrecursive for NVHPC.
 FFLAGS_MILHOJA = -I${MILHOJA_PATH}/include -fexceptions -auto
+FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_SZ3    = -I${SZ3_PATH}/include
+FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 FFLAGS_MILHOJA_AMREX = -I${MILHOJA_PATH}/include -fexceptions -auto ${FFLAGS_AMREX}
 
 F90FLAGS = -DHAVE_MPI_MODULE -DH5_USE_18_API
@@ -92,6 +99,9 @@ CFLAGS_NCMPI = -I$(LIB_NCMPI)/include
 CFLAGS_AMREX = -I${AMREX_PATH}/include
 CFLAGS_MILHOJA = -I${MILHOJA_PATH}/include
 CFLAGS_MILHOJA_AMREX = -I${MILHOJA_PATH}/include ${CFLAGS_AMREX}
+CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_SZ3    = -I${SZ3_PATH}/include
+CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 #----------------------------------------------------------------------------
 # Linker flags
@@ -137,6 +147,9 @@ LIB_MA28 = -L$(MA28_PATH) -lma28
 # AMReX, we have to manually list AMReX afterward so that the linker finds
 # all dependencies.
 LIB_MILHOJA = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread -lamrex
+LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ3    = -L${SZ3_PATH}/lib -DUSE_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
 LIB_MILHOJA_AMREX = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread ${LIB_AMREX}
 
 # Uncomment the following line to use electic fence memory debugger.

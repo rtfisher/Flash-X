@@ -1,3 +1,10 @@
+# YAML file for PoolBoiling tests
+# comments can be added with "#"
+
+Comparison/incompFlow/FlowBoiling/2d/IO:
+  setupOptions: -auto -maxblocks=16 +amrex +parallelIO +hdf5zfp -2d -nxb=16 -nyb=16 IOWriteGridFiles=True
+  parfiles: test_io_2d.par
+  transfers: source/Simulation/SimulationMain/incompFlow/FlowBoiling/tests/flow_boiling_hdf5_htr_0001
 # YAML file for FlowBoiling tests
 # comments can be added with "#"
 

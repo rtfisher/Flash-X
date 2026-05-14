@@ -99,6 +99,16 @@ module IO_data
   !For clean exit when memory usage gets scary
   real, save :: io_maxRSS, io_measRSS
 
+  !compression for chkpt files
+  real, save :: io_zfp_accuracy, io_zfp_precision, io_zfp_rate, io_zfp_reversible
+  real, save :: io_sz_abs_error, io_sz_rel_error, io_sz_pw_rel_error, io_sz_psnr, io_sz_norm
+  logical, save :: io_sz_abs_and_rel = .FALSE.
+
+  !compression for plot files
+  real, save :: io_zfp_accuracy_plt, io_zfp_precision_plt, io_zfp_rate_plt, io_zfp_reversible_plt
+  real, save :: io_sz_abs_error_plt, io_sz_rel_error_plt, io_sz_pw_rel_error_plt, io_sz_psnr_plt, io_sz_norm_plt
+  logical, save :: io_sz_abs_and_rel_plt = .FALSE.
+
   integer,parameter :: io_maxParms = 500
   integer, parameter :: io_prevParmPad = 200
 

@@ -60,6 +60,27 @@ USEFUL VARIABLES
 
   Selects what kind of IO to use. 
 
+* Name  : HDF5ZFP
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+ZFP compression support. The `+hdf5zfp` shortcut sets
+  `IO=hdf5` and `HDF5ZFP=True`.
+
+* Name  : HDF5SZ
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+SZ compression support. The `+hdf5sz` shortcut sets
+  `IO=hdf5` and `HDF5SZ=True`.
+
+* Name  : HDF5SZ3
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+SZ3 compression support. The `+hdf5sz3` shortcut sets
+  `IO=hdf5` and `HDF5SZ3=True`.
+
 * Name  : parallelIO
   Type  : Boolean
   Values: True, False

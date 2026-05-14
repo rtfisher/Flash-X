@@ -30,6 +30,10 @@ PAPI_PATH  =
 PAPI_FLAGS =
 LIB_NCMPI = /usr
 MA28_PATH = ${FLASHX_MA28_DIR}
+SZ_PATH     =  ${FLASHX_SZ_DIR}
+SZ3_PATH    =  ${FLASHX_SZ3_DIR}
+ZFP_PATH   =   ${FLASHX_ZFP_DIR}
+H5Z_PATH   =   ${FLASHX_H5ZZFP_DIR}
 
 #----------------------------------------------------------------------------
 # Compiler and linker commands
@@ -80,6 +84,10 @@ CFLAGS_HYPRE = -I${HYPRE_PATH}/include
 FFLAGS_AMREX = -I${AMREX_PATH}/include
 FFLAGS_OACC  = -fopenacc
 FFLAGS_MILHOJA = -I${MILHOJA_PATH}/include -fexceptions
+FFLAGS_SZ    = -I${SZ_PATH}/include
+FFLAGS_SZ3    = -I${SZ3_PATH}/include
+FFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
+
 FFLAGS_MILHOJA_AMREX = -I${MILHOJA_PATH}/include -fexceptions ${FFLAGS_AMREX}
 
 F90FLAGS =
@@ -100,6 +108,9 @@ CFLAGS_AMREX = -I${AMREX_PATH}/include
 CFLAGS_OACC  = -fopenacc -DSUPPRESS_ACC_ROUTINE_FOR_METH_IN_APP
 CFLAGS_MILHOJA = -I${MILHOJA_PATH}/include
 CFLAGS_MILHOJA_AMREX = -I${MILHOJA_PATH}/include ${CFLAGS_AMREX}
+CFLAGS_SZ    = -I${SZ_PATH}/include
+CFLAGS_SZ3    = -I${SZ3_PATH}/include
+CFLAGS_ZFP   = -I${ZFP_PATH}/include -I${H5Z_PATH}/include
 
 
 
@@ -148,6 +159,10 @@ LIB_MA28 = -L$(MA28_PATH) -lma28
 # the dependencies.
 LIB_MILHOJA = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread
 LIB_MILHOJA_AMREX = -L${MILHOJA_PATH}/lib -lmilhoja -lpthread ${LIB_AMREX}
+LIB_SZ    = -L${SZ_PATH}/lib -DUSE_HDF5_SZ -lhdf5sz -Wl,-rpath,${SZ_PATH}/lib
+LIB_SZ3    = -L${SZ3_PATH}/lib -DUSE_HDF5_SZ3 -lhdf5sz3 -Wl,-rpath,${SZ3_PATH}/lib
+LIB_ZFP   = -L${ZFP_PATH}/lib -L${H5Z_PATH}/lib -lh5zzfp -lzfp -Wl,-rpath,${ZFP_PATH}/lib -Wl,-rpath,${H5Z_PATH}/lib
+
 
 # Uncomment the following line to use electic fence memory debugger.
 # Need the following environmental variable (see env.sh):

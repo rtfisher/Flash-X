@@ -52,6 +52,16 @@ Composite/Sod/PseudoUG/2d/Paramesh/simpleUnsplit:
   parfiles: test_pseudoug_2d.par
   restartParfiles: test_pseudoug_2d_restart.par
 
+Composite/Sod/PseudoUG/2d/Paramesh/unsplitZFP:
+  setupOptions: -auto -2d -debug +uhd +pm4dev +nolwf -gridinterpolation=monotonic +parallelIO +hdf5zfp
+  parfiles: test_pseudoug_2d_zfp.par
+  restartParfiles: test_pseudoug_2d_restart.par
+
+Composite/Sod/PseudoUG/2d/Paramesh/unsplitSZ3:
+  setupOptions: -auto -2d -debug +uhd +pm4dev +nolwf -gridinterpolation=monotonic +parallelIO +hdf5sz3
+  parfiles: test_pseudoug_2d_sz3.par
+  restartParfiles: test_pseudoug_2d_restart.par
+
 Composite/Sod/PseudoUG/2d/Paramesh/unsplit:
   setupOptions: -auto -2d -debug +uhd +pm4dev +nolwf -gridinterpolation=monotonic
   parfiles: test_pseudoug_2d.par
