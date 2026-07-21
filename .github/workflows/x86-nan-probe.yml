@@ -1,0 +1,112 @@
+# One-off, manually-triggered probe.
+#
+# Purpose: establish whether the NaN-blind error accumulation in the Flash-X
+# nuclear-network integrators reproduces on x86-64, or is specific to arm64.
+#
+#   errmax = tiny
+#   do i = 1, nv
+#      errmax = max(errmax, abs(yerr(i)/yscal(i)))
+#   enddo
+#   errmax = errmax/eps
+#   ... accept the step when errmax < 1
+#
+# If every yerr(i) is NaN and the loop leaves errmax at its seed, the diverged
+# step is scored as converged and a NaN solution is accepted.  Measured on
+# arm64 (gfortran 16.1, -O0/-O1/-O2): errmax = 1.0e-25, step ACCEPTED.
+#
+# workflow_dispatch ONLY -- this is deliberately not wired to push or pull
+# request, and is not intended to run as part of regular CI.
+
+name: x86 NaN-probe (manual, one-off)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Report platform and compiler
+        run: |
+          echo "uname -m : $(uname -m)"
+          echo "uname -a : $(uname -a)"
+          gfortran --version | head -1
+          echo "lscpu model:"
+          lscpu | grep -i "model name" || true
+
+      - name: Write the probe
+        run: |
+          cat > max_nan_probe.f90 << 'PROBE_EOF'
+          program max_nan_probe
+             use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_quiet_nan, ieee_is_nan
+             implicit none
+             integer, parameter :: nv = 13
+             real, parameter    :: tiny_seed = 1.0e-30, eps = 1.0e-5
+             real :: qnan, errmax_tiny, errmax_zero, m1, m2
+             real :: yerr(nv), yscal(nv)
+             integer :: i
+
+             qnan = ieee_value(qnan, ieee_quiet_nan)
+
+             m1 = max(tiny_seed, qnan)
+             m2 = max(qnan, tiny_seed)
+             write(*,'(a,es12.4,a,l1)') 'max(finite, NaN) = ', m1, '   isNaN = ', ieee_is_nan(m1)
+             write(*,'(a,es12.4,a,l1)') 'max(NaN, finite) = ', m2, '   isNaN = ', ieee_is_nan(m2)
+
+             do i = 1, nv
+                yerr(i)  = qnan
+                yscal(i) = 1.0
+             enddo
+
+             errmax_tiny = tiny_seed
+             do i = 1, nv
+                errmax_tiny = max(errmax_tiny, abs(yerr(i)/yscal(i)))
+             enddo
+             errmax_tiny = errmax_tiny/eps
+
+             errmax_zero = 0.0
+             do i = 1, nv
+                errmax_zero = max(errmax_zero, abs(yerr(i)/yscal(i)))
+             enddo
+             errmax_zero = errmax_zero/eps
+
+             write(*,'(a,es12.4)') 'Bader-style errmax (seed = tiny) = ', errmax_tiny
+             write(*,'(a,es12.4)') 'Rosen-style errmax (seed = 0.0 ) = ', errmax_zero
+
+             if (errmax_tiny .lt. 1.0) then
+                write(*,'(a)') 'VERDICT bader : ACCEPTED -> NaN escapes (BUG PRESENT)'
+             else
+                write(*,'(a)') 'VERDICT bader : REJECTED -> retried (bug not exposed)'
+             endif
+
+             if (errmax_zero .le. 1.0) then
+                write(*,'(a)') 'VERDICT rosen : ACCEPTED -> NaN escapes (BUG PRESENT)'
+             else
+                write(*,'(a)') 'VERDICT rosen : REJECTED -> retried (bug not exposed)'
+             endif
+
+             if (.not. (abs(qnan) .le. huge(1.0e0))) then
+                write(*,'(a)') 'GUARD   : abs(NaN) <= huge() is .false. -> guard works'
+             else
+                write(*,'(a)') 'GUARD   : abs(NaN) <= huge() is .true.  -> GUARD FAILS HERE'
+             endif
+          end program max_nan_probe
+          PROBE_EOF
+          echo "--- source written ---"
+
+      - name: Compile and run at each optimisation level
+        run: |
+          for opt in O0 O1 O2 O3; do
+            echo "================ -$opt ================"
+            gfortran -$opt -fdefault-real-8 -o probe_$opt max_nan_probe.f90
+            ./probe_$opt
+            echo ""
+          done
+
+      - name: Disassemble the reduction (informational)
+        run: |
+          gfortran -O2 -fdefault-real-8 -S -o probe.s max_nan_probe.f90
+          echo "maxsd occurrences : $(grep -c maxsd probe.s || true)"
+          echo "ucomisd/comisd    : $(grep -c 'ucomisd\|comisd' probe.s || true)"
+          echo "maxpd/vmaxpd      : $(grep -c 'maxpd\|vmaxpd' probe.s || true)"
