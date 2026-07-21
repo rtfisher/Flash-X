@@ -128,6 +128,14 @@ subroutine bn_baderMa28(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
   real, parameter     ::   safe1 = 0.25e0, safe2 = 0.7e0, redmax=1.0e-5, & 
        &                  redmin = 0.7e0, tiny = 1.0e-30, scalmx = 0.1e0
 
+  !! NaN/Inf guard on the error test.  bnfmax is the largest finite real,
+  !! bnfbad the sentinel errmax that forces a step rejection, and nreduct
+  !! bounds the stepsize reduction loop so it cannot spin silently forever.
+  logical, save       ::   badstep
+  integer, save       ::   nreduct
+  integer, parameter  ::   maxreduct = 200
+  real, parameter     ::   bnfmax = huge(1.0e0), bnfbad = 1.0e10
+
   data             epsold/-1.0e0/, nvold/-1/
   data             nseq /2, 6, 10, 14, 22, 34, 50, 70/
   data             ifirst/0/ 
@@ -222,6 +230,8 @@ subroutine bn_baderMa28(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
      kopt = kmax
   end if
   reduct = .false.
+  !!  count the stepsize reductions taken for this one step (see label 03)
+  nreduct = 0
 
   !!  evaluate the sequence of semi implicit midpoint rules
 02 do k=1,kmax
@@ -251,9 +261,20 @@ subroutine bn_baderMa28(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
      !!   compute normalized error estimate
      if (k .ne. 1) then
         errmax = tiny
+        badstep = .false.
         do i=1,nv
+           !!   a NaN or Inf here MUST reject the step.  max() is NaN-blind
+           !!   (on arm64 it compiles to fmaxnm, which returns the non-NaN
+           !!   operand), so an all-NaN extrapolation would otherwise leave
+           !!   errmax = tiny, pass the errmax < 1 test below, and advance x
+           !!   with a poisoned solution that escapes to the grid.
+           !!   abs(v) .le. bnfmax is .true. for every finite v and .false.
+           !!   for NaN and +-Inf, so finite results are unaffected.
+           if (.not. (abs(yerr(i)) .le. bnfmax)) badstep = .true.
+           if (.not. (abs(y(i))    .le. bnfmax)) badstep = .true.
            errmax = max(errmax,abs(yerr(i)/yscal(i)))
         enddo
+        if (badstep) errmax = bnfbad
         errmax   = errmax/eps   
         km = k - 1
         err(km) = (errmax/safe1)**(1.0e0/(2*km+1))
@@ -294,6 +315,15 @@ subroutine bn_baderMa28(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
   red    = max(red,redmax)
   h      = h * red
   reduct = .true.
+  !!  every reduction shrinks h by at least a factor redmin=0.7, so maxreduct
+  !!  reductions means h < 1e-31*htry: unreachable for a converging step, but
+  !!  it bounds the NaN-rejection path so it fails loudly instead of grinding
+  !!  h down to zero (or looping) in silence.
+  nreduct = nreduct + 1
+  if (nreduct .gt. maxreduct) then
+     write(*,*) 'too many stepsize reductions in bn_baderMa28, h =',h
+     call Driver_abort('ERROR in bn_baderMa28: too many stepsize reductions')
+  end if
   go to 2
 
   !!  successful step; get optimal row for convergence and corresponding stepsize
@@ -505,6 +535,14 @@ subroutine bn_baderGift(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
   real, parameter    :: safe1 = 0.25e0, safe2 = 0.7e0, redmax=1.0e-5, & 
        &                  redmin = 0.7e0, tiny = 1.0e-30, scalmx = 0.1e0
 
+!!  NaN/Inf guard on the error test.  bnfmax is the largest finite real,
+!!  bnfbad the sentinel errmax that forces a step rejection, and nreduct
+!!  bounds the stepsize reduction loop so it cannot spin silently forever.
+  logical, save       ::   badstep
+  integer, save       ::   nreduct
+  integer, parameter  ::   maxreduct = 200
+  real, parameter     ::   bnfmax = huge(1.0e0), bnfbad = 1.0e10
+
 
   data             first/.true./, epsold/-1.0e0/, nvold/-1/
   data             nseq /2, 6, 10, 14, 22, 34, 50, 70/
@@ -565,6 +603,8 @@ subroutine bn_baderGift(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
      kopt = kmax
   end if
   reduct = .false.
+!!  count the stepsize reductions taken for this one step (see label 03)
+  nreduct = 0
 
 !!  evaluate the sequence of semi implicit midpoint rules
 02 do k=1,kmax
@@ -594,9 +634,20 @@ subroutine bn_baderGift(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
    !!  compute normalized error estimate
      if (k .ne. 1) then
         errmax = tiny
+        badstep = .false.
         do i=1,nv
+         !!   a NaN or Inf here MUST reject the step.  max() is NaN-blind
+         !!   (on arm64 it compiles to fmaxnm, which returns the non-NaN
+         !!   operand), so an all-NaN extrapolation would otherwise leave
+         !!   errmax = tiny, pass the errmax < 1 test below, and advance x
+         !!   with a poisoned solution that escapes to the grid.
+         !!   abs(v) .le. bnfmax is .true. for every finite v and .false.
+         !!   for NaN and +-Inf, so finite results are unaffected.
+           if (.not. (abs(yerr(i)) .le. bnfmax)) badstep = .true.
+           if (.not. (abs(y(i))    .le. bnfmax)) badstep = .true.
            errmax = max(errmax,abs(yerr(i)/yscal(i)))
         enddo
+        if (badstep) errmax = bnfbad
         errmax   = errmax/eps   
         km = k - 1
         err(km) = (errmax/safe1)**(1.0e0/(2*km+1))
@@ -637,6 +688,15 @@ subroutine bn_baderGift(y,dydx,nv,x,htry,eps,yscal,hdid,hnext, &
   red    = max(red,redmax)
   h      = h * red
   reduct = .true.
+!!  every reduction shrinks h by at least a factor redmin=0.7, so maxreduct
+!!  reductions means h < 1e-31*htry: unreachable for a converging step, but
+!!  it bounds the NaN-rejection path so it fails loudly instead of grinding
+!!  h down to zero (or looping) in silence.
+  nreduct = nreduct + 1
+  if (nreduct .gt. maxreduct) then
+     write(*,*) 'too many stepsize reductions in baderGift, h =',h
+     call Driver_abort('ERROR in bn_baderGift: too many stepsize reductions')
+  end if
   go to 2
 
 !!  successful step; get optimal row for convergence and corresponding stepsize

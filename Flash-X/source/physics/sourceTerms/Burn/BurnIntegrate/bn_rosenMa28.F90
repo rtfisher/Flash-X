@@ -118,6 +118,11 @@ subroutine bn_rosenMa28(y,dydx,n,x,htry,eps,yscal,hdid,hnext,  &
   real, parameter     ::  safety=0.9e0, grow=1.5e0, pgrow=-0.25e0,  & 
        &                  shrnk=0.5e0,  pshrnk=-1.0e0/3.0e0,errcon=0.1296e0
 
+!!  NaN/Inf guard on the error test: bnfmax is the largest finite real,
+!!  bnfbad the sentinel errmax that forces a step rejection.
+  logical, save       ::  badstep
+  real, parameter     ::  bnfmax = huge(1.0e0), bnfbad = 1.0e10
+
 !!  shampine parameter set 
   real, parameter     ::  gam =  1.0e0/2.0e0,    a21 =  2.0e0,  & 
        &                  a31 =  48.0e0/25.0e0,  a32 =  6.0e0/25.0e0,  & 
@@ -271,9 +276,18 @@ subroutine bn_rosenMa28(y,dydx,n,x,htry,eps,yscal,hdid,hnext,  &
 
    !!  determine the scaled accuracy 
      errmax = 0.0e0 
+     badstep = .false.
      do i=1,n 
+      !!   a NaN or Inf must reject the step.  max() is NaN-blind (fmaxnm on
+      !!   arm64 returns the non-NaN operand), so a poisoned step would
+      !!   otherwise report errmax = 0, be accepted, and leak NaN to the grid.
+      !!   abs(v) .le. bnfmax is .true. for every finite v, .false. for
+      !!   NaN and +-Inf, so finite results are unaffected.
+        if (.not. (abs(err(i)) .le. bnfmax)) badstep = .true.
+        if (.not. (abs(y(i))   .le. bnfmax)) badstep = .true.
         errmax = max(errmax,abs(err(i)/yscal(i))) 
      enddo
+     if (badstep) errmax = bnfbad
      errmax = errmax/eps 
 
    !!  if the step succeded, compute the size of the next step and return 
@@ -395,6 +409,11 @@ subroutine bn_rosenGift(y,dydx,n,x,htry,eps,yscal,hdid,hnext,  &
        &                 g2(nmax),g3(nmax),g4(nmax),ysav(nmax),xx
   real, parameter     ::    safety=0.9e0, grow=1.5e0, pgrow=-0.25e0,  & 
        &           shrnk=0.5e0,  pshrnk=-1.0e0/3.0e0, errcon=0.1296e0 
+
+!!  NaN/Inf guard on the error test: bnfmax is the largest finite real,
+!!  bnfbad the sentinel errmax that forces a step rejection.
+  logical, save       ::  badstep
+  real, parameter     ::  bnfmax = huge(1.0e0), bnfbad = 1.0e10
 
   integer, save       :: i,j,jtry
 
@@ -565,9 +584,18 @@ subroutine bn_rosenGift(y,dydx,n,x,htry,eps,yscal,hdid,hnext,  &
 
    !!  determine the scaled accuracy 
      errmax = 0.0e0 
+     badstep = .false.
      do i=1,n 
+      !!   a NaN or Inf must reject the step.  max() is NaN-blind (fmaxnm on
+      !!   arm64 returns the non-NaN operand), so a poisoned step would
+      !!   otherwise report errmax = 0, be accepted, and leak NaN to the grid.
+      !!   abs(v) .le. bnfmax is .true. for every finite v, .false. for
+      !!   NaN and +-Inf, so finite results are unaffected.
+        if (.not. (abs(err(i)) .le. bnfmax)) badstep = .true.
+        if (.not. (abs(y(i))   .le. bnfmax)) badstep = .true.
         errmax = max(errmax,abs(err(i)/yscal(i))) 
      enddo
+     if (badstep) errmax = bnfbad
      errmax = errmax/eps 
 
    !!  if the step succeded, compute the size of the next step and return 
