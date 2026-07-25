@@ -27,6 +27,13 @@ DATAFILES       Profiles
 PARAMETER       initialWDFile   STRING  "wd_profile_rhoc_415e5_M_106_correct.dat"
 
 #
+# workshop analysis scripts and parameter file (LAUNCH 2026)
+#
+
+DATAFILES       analysis
+DATAFILES       centerDet_2d_xlowres.par
+
+#
 # ambient medium outside star
 #
 
