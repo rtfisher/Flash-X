@@ -68,15 +68,29 @@ def main():
         print("No plotfiles here.  cd into a run directory first.")
         return
 
-    times, radii = [], []
+    times, radii, skipped = [], [], []
     print(f"{'t [s]':>10} {'R_front [km]':>14}")
     for f in files:
-        ds = yt.load(f)
-        t = float(ds.current_time)
-        R = front_radius(ds)
+        # In a real run of ~70 plotfiles, one occasionally cannot be read --
+        # an interrupted write, or a cloud filesystem hiccup. Losing the whole
+        # measurement to a single bad file would be absurd, so skip it, say so
+        # plainly, and carry on with the rest.
+        try:
+            ds = yt.load(f)
+            t = float(ds.current_time)
+            R = front_radius(ds)
+        except Exception as exc:
+            skipped.append((f, type(exc).__name__))
+            continue
         if np.isfinite(R):
             times.append(t); radii.append(R)
             print(f"{t:10.5f} {R / KM:14.1f}")
+
+    if skipped:
+        print(f"\n  skipped {len(skipped)} unreadable file(s) -- this happens, "
+              "and the fit below simply uses the rest:")
+        for f, why in skipped:
+            print(f"    {f}  ({why})")
 
     times = np.array(times); radii = np.array(radii)
     if len(times) < 3:

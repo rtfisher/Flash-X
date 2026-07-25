@@ -64,16 +64,29 @@ def main():
 
     os.makedirs("frames", exist_ok=True)
 
+    skipped = []
     for i, f in enumerate(files):
-        ds = yt.load(f)
-        p = yt.SlicePlot(ds, "theta", ("flash", field), origin="native")
-        p.set_log(("flash", field), True)
-        p.set_zlim(("flash", field), vmin, vmax)       # <- the fixed scale
-        p.set_cmap(("flash", field), CMAP.get(field, "viridis"))
-        p.set_axes_unit("km")
-        p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
-        p.save(f"frames/frame_{i:04d}.png")
+        # One unreadable plotfile should cost you one frame, not the movie.
+        try:
+            ds = yt.load(f)
+            p = yt.SlicePlot(ds, "theta", ("flash", field), origin="native")
+            p.set_log(("flash", field), True)
+            p.set_zlim(("flash", field), vmin, vmax)       # <- the fixed scale
+            p.set_cmap(("flash", field), CMAP.get(field, "viridis"))
+            p.set_axes_unit("km")
+            p.annotate_timestamp(corner="upper_left", draw_inset_box=True)
+            p.save(f"frames/frame_{i:04d}.png")
+        except Exception as exc:
+            skipped.append((f, type(exc).__name__))
+            print(f"  frame {i:4d}/{len(files)-1}   SKIPPED ({type(exc).__name__})")
+            continue
         print(f"  frame {i:4d}/{len(files)-1}   t = {float(ds.current_time):.4f} s")
+
+    if skipped:
+        print(f"\n  {len(skipped)} file(s) could not be read and were left out "
+              "of the movie:")
+        for f, why in skipped:
+            print(f"    {f}  ({why})")
 
     # ---- stitch, if ffmpeg exists ----------------------------------------
     out = f"movie_{field}.mp4"
