@@ -60,6 +60,7 @@ restart         = .false.
 
 #	checkpoint file output parameters
 checkpointFileIntervalTime = 0.2
+plotFileIntervalTime       = 0.02		# workshop: 11 frames across the run
 checkpointFileIntervalStep = 0
 checkpointFileNumber = 0
 

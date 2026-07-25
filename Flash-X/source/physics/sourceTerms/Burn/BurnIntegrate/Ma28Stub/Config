@@ -1,0 +1,16 @@
+# Config file for the MA28 abort-stub subunit
+# [/source/physics/sourceTerms/Burn/BurnIntegrate/Ma28Stub]
+#
+# The Bader-Deuflhard and Rosenbrock integrators in the parent unit carry the
+# MA28 and GIFT linear-algebra paths in the same source files, so the compiled
+# objects reference ma28ad/ma28bd/ma28cd unconditionally even when the GIFT
+# path is the one selected at runtime by the "algebra" runtime parameter.
+#
+# MA28 is Harwell (HSL) code and is not distributed with Flash-X; lib/ma28
+# carries only a TYPE EXTERNAL declaration.  This subunit supplies the three
+# missing symbols as stubs that abort if they are ever actually reached, which
+# lets Aprox13/Aprox19 link and run with algebra=2 (GIFT) on installations that
+# have no MA28 library available.
+#
+# Included only when the setup variable Gift is set; see the parent
+# nuclearBurn Config.
