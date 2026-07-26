@@ -131,6 +131,11 @@ def main():
     expected = 2.0 / (d + 2)
 
     print()
+    print()
+    print("  Why does the slope give the power?  If  R = A t^n  then taking logs")
+    print("  gives  log R = log A + n log t  -- a straight line in log-log, with")
+    print("  slope n.  So fitting a LINE to the logs measures the POWER directly.")
+    print()
     print(f"measured   R ~ t^{n:.3f}")
     print(f"predicted  R ~ t^{expected:.3f}   (Sedov-Taylor in {d}D)")
     print(f"difference {abs(n - expected) / expected * 100:.1f}%")
@@ -141,18 +146,32 @@ def main():
     xi = A / (E / rho) ** (1.0 / (d + 2))
     print(f"similarity constant xi = {xi:.3f}   (theory says close to 1)")
 
-    fig, ax = plt.subplots(figsize=(6.5, 5.0))
-    ax.plot(t, R, "o", ms=9, color="#E0A030", label="your measurement", zorder=3)
+    # Two panels. LEFT: the measurement as you took it, against theory.
+    # RIGHT: the same data on log-log, where a power law becomes a STRAIGHT
+    # LINE whose slope is the power -- which is how the exponent was actually
+    # obtained, and is worth seeing rather than taking on trust.
+    fig, (ax, axl) = plt.subplots(1, 2, figsize=(11.0, 4.6))
 
+    ax.plot(t, R, "o", ms=9, color="#E0A030", label="your measurement", zorder=3)
     tt = np.linspace(t.min() * 0.9, t.max() * 1.05, 200)
     ax.plot(tt, xi * (E * tt ** 2 / rho) ** (1.0 / (d + 2)), "-", lw=2,
             color="#3C5A6E", label=rf"Sedov-Taylor:  $R \propto t^{{{expected:.2f}}}$")
-
     ax.set_xlabel("time")
     ax.set_ylabel("shock radius")
-    ax.set_title(f"measured  $R \\propto t^{{{n:.3f}}}$   vs  theory  "
-                 f"$t^{{{expected:.3f}}}$")
+    ax.set_title("as measured")
     ax.legend(frameon=False)
+
+    axl.loglog(t, R, "o", ms=9, color="#E0A030", label="your measurement", zorder=3)
+    axl.loglog(tt, A * tt ** n, "-", lw=2, color="#B03A2E",
+               label=rf"straight-line fit:  slope $n = {n:.3f}$")
+    axl.loglog(tt, xi * (E * tt ** 2 / rho) ** (1.0 / (d + 2)), "--", lw=1.6,
+               color="#3C5A6E", label=rf"theory slope {expected:.3f}")
+    axl.set_xlabel("log time")
+    axl.set_ylabel("log shock radius")
+    axl.set_title("log-log: a power law is a straight line")
+    axl.legend(frameon=False, fontsize=9)
+
+    fig.suptitle(f"measured  $R \\propto t^{{{n:.3f}}}$   vs  theory  $t^{{{expected:.3f}}}$")
     fig.tight_layout()
     fig.savefig("sedov_radius.png", dpi=140)
     print("\nwrote sedov_radius.png and sedov_radius.dat")

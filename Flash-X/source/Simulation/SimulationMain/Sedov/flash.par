@@ -64,7 +64,7 @@ checkpointFileIntervalStep = 0
 checkpointFileNumber = 0
 
 #	plotfile output parameters
-plotfileIntervalTime = 0.
+plotfileIntervalTime = 0.005		# workshop: 11 frames across tmax = 0.05
 plotfileIntervalStep = 0
 plotfileNumber = 0
 
