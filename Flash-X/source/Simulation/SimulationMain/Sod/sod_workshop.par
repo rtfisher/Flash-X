@@ -79,8 +79,16 @@ eintSwitch     = 1.e-4
 plot_var_1 = "dens"
 plot_var_2 = "pres"
 plot_var_3 = "temp"
+# velx so the worksheet stretch goal ("plot velocity too") actually works --
+# without it a plotfile carries only dens/pres/temp and yt raises.
+plot_var_4 = "velx"
 
 #    AMR refinement parameters  
+# Resolution.  lrefine_max caps how FINE the grid may get; lrefine_min sets
+# the floor.  Lowering lrefine_max alone does NOT coarsen the domain
+# uniformly -- it only stops the refinement criteria going deeper where
+# they wanted to.  To halve the resolution everywhere, move BOTH.
+lrefine_min     = 1
 lrefine_max     = 6
 refine_var_1    = "dens"
 
