@@ -239,6 +239,23 @@ subroutine Simulation_initBlock(solnData, tileDesc)
 
               ! heat to ignition temp and set a parameterized composition
               ! if zone center is within half zone-width of match
+              !
+              ! NOTE: the matchhead composition comes from xc12_match/xo16_match
+              ! and is INDEPENDENT of the star, whose composition is read from
+              ! the initialWDFile profile.  That is deliberate -- physically the
+              ! trigger is a converging shock from a helium-shell detonation, so
+              ! its composition is a modelling choice, not something inherited
+              ! from the core -- and it is harmless for the stock problem, where
+              ! the star is 50/50 C/O and the defaults agree with it.
+              !
+              ! It stops being harmless the moment the star's composition is
+              ! varied.  Leaving the match at 0.5/0.5 inside, say, a 20% carbon
+              ! star seeds the ignition region with more fuel than its
+              ! surroundings, which biases the run toward igniting and quietly
+              ! breaks any claim that composition was the only variable changed.
+              ! For a C/O study, set xc12_match and xo16_match in flash.par to
+              ! the same fractions as the progenitor.  (LAUNCH 2026 does this
+              ! for the three groups that vary carbon fraction.)
               if ( ign_dist <= sim_ignROuter + 0.5*dx .and. ign_dist >= sim_ignRInner - 0.5*dx ) then
                  temp = sim_ignTOuter
                  solnData(SPECIES_BEGIN:SPECIES_END,i,j,k) = sim_smallx

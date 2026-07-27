@@ -63,6 +63,10 @@ D r_match_inner         Inner radius of spherical matchhead region
 D r_match_outer         Outer radius of spherical matchhead region
 D t_ignite_inner        Temperature of matchhead at r_match_inner
 D t_ignite_outer        Temperature of matchhead at r_match_outer
+D  NOTE: the matchhead composition is INDEPENDENT of the star's, which comes
+D  from initialWDFile.  If you vary the progenitor's C/O you must set these
+D  to match it, or the trigger region carries a different fuel mixture than
+D  its surroundings and composition is no longer the only variable.
 D xc12_match            c12 mass fraction of the matchhead region (remainder is filled with he4)
 D xo16_match            o16 mass fraction of the matchhead region (remainder is filled with he4)
 D xni56_match           ni56 mass fraction of the matchhead region (remainder is filled with he4)
