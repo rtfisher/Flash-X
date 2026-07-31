@@ -31,6 +31,10 @@ io:--with-unit=IO:
 serialIO:parallelIO=False:
 parallelIO:parallelIO=True:
 hdf5:IO=hdf5:
+#compression:
+hdf5zfp:IO=hdf5:HDF5ZFP=True
+hdf5sz:IO=hdf5:HDF5SZ=True
+hdf5sz3:IO=hdf5:HDF5SZ3=True
 # when async is complete remove IO=hdf5
 asynchdf5:IO=hdf5:AsyncHDF5=True
 pnetcdf:IO=pnetcdf:

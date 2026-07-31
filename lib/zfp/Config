@@ -1,0 +1,5 @@
+# Library configuration file
+
+LIBRARY hdf5
+TYPE EXTERNAL
+

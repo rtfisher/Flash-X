@@ -1,15 +1,25 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
 #include "mangle_names.h"
+#include <string.h>
+#include <assert.h>
 #include <hdf5.h>
 #include "hdf5_flash.h"
-#include <mpi.h>
 #include "Simulation.h"
 #include "constants.h"
 #include "io_flash.h"
 #include "io_h5_attribute.h"
+
+#ifdef FLASH_HDF5_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
+#ifdef FLASH_HDF5_SZ
+#include "hdf5_sz/H5Z_SZ.h"
+#endif
+
+#ifdef FLASH_HDF5_SZ3
+#include "hdf5_sz3/include/H5Z_SZ3.hpp"
+#endif
 
 #ifdef FLASH_IO_ASYNC_HDF5
   extern hid_t io_es_id;
@@ -17,59 +27,44 @@
 
 int Driver_abortC(char* message);
 
-
-/* xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx */
-
-
-
 /* 
    This function writes out a single unknown (passed from the checkpoint 
-   routine), giving the record a label from an unk variable in single precision
+   routine), giving the record a label from an unk variable
    
    
    The dimensions of the unknowns array (nxb, nyb, nzb, maxblocks)
    are passed through as arguments.  The dataspace (what gets written
    to disk) and the memory space (how the unknowns array is accessed in
-   local memory) are defined based on these passed values. 
-   We also pass in the maximum and minimum values of the dataset 
+   local memory) are defined based on these passed values.
+   We also pass in the maximum and minimum values of the dataset.
+   This single-precision variant is used for plotfile output when the
+   grid quantities are written in single precision.
 
 */
 
 
-void FTOC(io_h5write_unknowns_sp)(int* myPE, 
-                          hid_t* file_identifier,
-                          int* nxb,            /* # of zones to store in x */
-                          int* nyb,            /* # of zones to store in y */
-                          int* nzb,            /* # of zones to store in z */
-                          float* varMin,
-                          float* varMax,
-                          float* unknowns,   /* [mblk][NZB][NYB][NXB][nvar] */
-                          char record_label[5],/* add char-null termination */
-                          int* local_blocks,  
-                          int* total_blocks,
-                          int* global_offset,
-                          int* dowrite)
+void FTOC(io_h5write_unknowns_sp)(int* myPE,
+			       hid_t* file_identifier,
+			       int* nxb,             /* num of zones in x dir*/
+			       int* nyb,             /* num of zones in y */
+			       int* nzb,             /* num of zones in z */
+             float* varMin,
+             float* varMax,
+             float* unknowns,   /* [mblk][NZB][NYB][NXB][nvar] */
+			       char record_label[5], /* add char-null termination */
+			       int* local_blocks,  
+			       int* total_blocks,
+			       int* global_offset,
+			       int* compression_type,
+			       double* compression_val,
+			       double* compression_val2,
+			       int* dowrite)
 {
-
-
   hid_t dataspace, dataset, memspace, dxfer_template, dataset_plist;
-
-  herr_t status;
-
-  int rank;
-  hsize_t dimens_4d[4], dimens_5d[5];
-
-  hsize_t start_4d[4];
-  hsize_t stride_4d[4], count_4d[4];
-
-#if defined (CHUNK) || defined (IBM) || defined (TFLOPS) || defined (CHIBA) || defined (SGI)
-  int ierr;
-#endif
-
-#ifdef CHUNK
-  hsize_t dimens_chunk[4];
-#endif
-
+  herr_t status, ierr, herr;
+  hsize_t dimens_4d[4], mem_dims_4d[4], chunk_dims[4], start_4d[4], stride_4d[4], count_4d[4];
+  size_t cd_nelmts;
+  unsigned int* cd_values = NULL;
   char record_label_new[5];
   const char minLabel[] = "minimum";
   const char maxLabel[] = "maximum";
@@ -85,6 +80,8 @@ void FTOC(io_h5write_unknowns_sp)(int* myPE,
   parallelIO = 0;
 #endif
 
+#define TRY_AND_CHECK_IGNORE(call, message) if ((call) < 0) \
+        {fprintf(stderr,"Error (ignored) from %s in io_h5write_unknowns_sp.\n",message);}
 
   /* 
      the variable names are 4 characters long -- copy this into 
@@ -94,200 +91,269 @@ void FTOC(io_h5write_unknowns_sp)(int* myPE,
   *(record_label_new + 4) = '\0';
 
   /* set the dimensions of the dataset */
-  rank = 4;
   dimens_4d[0] = *total_blocks;
   dimens_4d[1] = *nzb;
   dimens_4d[2] = *nyb;
   dimens_4d[3] = *nxb;
-  
-  dataspace = H5Screate_simple(rank, dimens_4d, NULL);
+
+  /* printf("dspace: %lu %lu %lu %lu\n",  dimens_4d[0], dimens_4d[1], dimens_4d[2], dimens_4d[3]); */
+
+  dataspace = H5Screate_simple(4, dimens_4d, NULL);
   if(dataspace < 0) Driver_abortC("Error: negative return from dataspace H5Screate_simple");
 
-#ifdef DEBUG_IO
-  printf("UNKNOWNS: dataspace = %d\n", (int) dataspace);
-#endif
-
   dataset_plist = H5Pcreate(H5P_DATASET_CREATE);
-
-#ifdef CHUNK
-  /* set the layout to chunked */
-
-  ierr = H5Pset_layout(dataset_plist, H5D_CHUNKED);
-
-  if (ierr < 0){
-    printf("Error: Unable to set layout for dataset_plist\n");
-    Driver_abortC("Error: Unable to set layout for dataset_plist\n");
-  }
-
-  
-  /* create a chunk containing 10 blocks worth of data */
-  dimens_chunk[0] = 10;
-  dimens_chunk[1] = *nzb;
-  dimens_chunk[2] = *nyb;
-  dimens_chunk[3] = *nxb;
-   
-  ierr = H5Pset_chunk(dataset_plist, 4, dimens_chunk);
-
-  if (ierr < 0){
-    printf("Error: Unable to set chunk for dataset_plist\n");
-    Driver_abortC("Error: Unable to set chunk for dataset_plist\n");
-  }
-
-#endif
-
+  if(dataset_plist < 0) Driver_abortC("Error: negative return from dataset_plist H5Pcreate");
+  H5Pset_fill_time(dataset_plist, H5D_FILL_TIME_NEVER);
 
   if ((*myPE == MASTER_PE) && (*global_offset != 0)) {
+    
+    /* open a parallel hdf5 dataset */
 #ifdef FLASH_IO_ASYNC_HDF5
-    dataset = H5Dopen_async(*file_identifier, record_label_new, H5P_DEFAULT, io_es_id); 
+    dataset = H5Dopen_async(*file_identifier, record_label_new,H5P_DEFAULT, io_es_id); 
 #else
-    dataset = H5Dopen(*file_identifier, record_label_new, H5P_DEFAULT); 
+    dataset = H5Dopen(*file_identifier, record_label_new,H5P_DEFAULT); 
 #endif    
     if(dataset < 0) {
       Driver_abortC("Error: H5Dopen io_h5write_unknowns_sp\n");
     }
-  }else {
+  } else {
+    
+#ifdef FLASH_HDF5_ZFP
+    if (H5Z_zfp_initialize() < 0)
+      Driver_abortC("Error: H5Z_zfp_initialize\n");
+#endif
+
+#if (defined FLASH_HDF5_ZFP) || (defined FLASH_HDF5_SZ) || (defined FLASH_HDF5_SZ3) || (defined CHUNK)
+    chunk_dims[0] = 1;
+    chunk_dims[1] = *nzb;
+    chunk_dims[2] = *nyb;
+    chunk_dims[3] = *nxb;
+    H5Pset_chunk(dataset_plist, 4, chunk_dims);
+    H5Pset_alloc_time(dataset_plist, H5D_ALLOC_TIME_LATE);
+    /* printf("chunk size: %lu %lu %lu %lu\n", chunk_dims[0], chunk_dims[1], chunk_dims[2], chunk_dims[3]); */
+#endif    
+
+    switch(*compression_type) {
+#ifdef FLASH_HDF5_SZ
+      case 1:
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ ABS %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, ABS, *compression_val, 0, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+            
+      case 2:
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ REL %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, REL, 0, *compression_val, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 3:
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ PW REL %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, PW_REL, 0, 0, *compression_val, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 4:
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ PSNR %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, PSNR, 0, 0, 0, *compression_val);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+#endif    
+
+#ifdef FLASH_HDF5_SZ3
+      // EB_ABS, EB_REL, EB_PSNR, EB_L2NORM, EB_ABS_AND_REL, EB_ABS_OR_REL
+      case 1:
+        // ABS
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 ABS %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 0, *compression_val, 0, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+            
+      case 2:
+        // REL
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 REL %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 1, 0, *compression_val, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 3:
+        // Not supported with SZ3
+        if(*myPE == MASTER_PE) 
+            printf("Not supported by SZ3 %f %f\n",  *compression_val, *compression_val2);
+        break;
+
+      case 4:
+        // NORM
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 NORM %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 3, 0, 0, 0, *compression_val);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 5:
+        // PSNR
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 PSNR %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 2, 0, 0, *compression_val, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 6:
+        // ABS AND REL
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 ABS_AND_REL %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 4, *compression_val, *compression_val2, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+
+      case 7:
+        // ABS OR REL
+        if(*myPE == MASTER_PE) 
+            printf("Using SZ3 ABS_OR_REL %f %f\n",  *compression_val, *compression_val2);
+        SZ_errConfigToCdArray(&cd_nelmts, &cd_values, 5, *compression_val, *compression_val2, 0, 0);
+        H5Pset_filter(dataset_plist, H5Z_FILTER_SZ3, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+        break;
+#endif    
+            
+#ifdef FLASH_HDF5_ZFP
+      case 101:
+        if(*myPE == MASTER_PE) 
+            printf("Using ZFP Accuracy %f %f\n",  *compression_val, *compression_val2);
+        H5Pset_zfp_accuracy(dataset_plist, *compression_val);
+        break;
+
+      case 102:
+        if(*myPE == MASTER_PE) 
+            printf("Using ZFP Precision %f %f\n",  *compression_val, *compression_val2);
+        H5Pset_zfp_precision(dataset_plist, *compression_val);
+        break;
+
+      case 103:
+        if(*myPE == MASTER_PE) 
+            printf("Using ZFP Rate %f %f\n",  *compression_val, *compression_val2);
+        H5Pset_zfp_rate(dataset_plist, *compression_val);
+        break;
+
+      case 104:
+        if(*myPE == MASTER_PE) 
+            printf("Using ZFP Lossless/Reversible %f %f\n",  *compression_val, *compression_val2);
+        H5Pset_zfp_reversible(dataset_plist);
+        break;
+#endif
+
+      default:
+        break;
+    }
+
 #ifdef FLASH_IO_ASYNC_HDF5
     dataset = H5Dcreate_async(*file_identifier, record_label_new,
-                  H5T_NATIVE_FLOAT, dataspace,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, io_es_id); 
+                   H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT, dataset_plist, H5P_DEFAULT, io_es_id); 
 #else
     dataset = H5Dcreate(*file_identifier, record_label_new,
-                  H5T_NATIVE_FLOAT, dataspace,H5P_DEFAULT, dataset_plist, H5P_DEFAULT); 
-#endif   
-  if(dataset < 0) {
+                  H5T_NATIVE_FLOAT, dataspace, H5P_DEFAULT, dataset_plist, H5P_DEFAULT); 
+#endif    
+
+    if(dataset < 0) {
       Driver_abortC("Error: H5Dcreate io_h5write_unknowns_sp\n");
     }    
   }
 
-
   if (*local_blocks > 0) {
-    /* create the hyperslab -- this will differ on the different processors */
     start_4d[0] = (hsize_t) (*global_offset);
     start_4d[1] = 0;
     start_4d[2] = 0;
     start_4d[3] = 0;
-    
+
     stride_4d[0] = 1;
     stride_4d[1] = 1;
-    stride_4d[2] = 1;  
+    stride_4d[2] = 1;
     stride_4d[3] = 1;
-    
+
     count_4d[0] = (hsize_t) (*local_blocks);
     count_4d[1] = *nzb;
     count_4d[2] = *nyb;
     count_4d[3] = *nxb;
-    
-    status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, start_4d, 
-                         stride_4d, count_4d, NULL);
-    
-    if (status < 0){
-      printf("Error: Unable to select hyperslab for unknowns dataspace\n");
-      Driver_abortC("Error: Unable to select hyperslab for unknown dataspace\n");
+
+    ierr = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, start_4d, 
+			       stride_4d, count_4d, NULL);
+
+    if(ierr < 0){
+      printf("%s\n", "Error: unable to select hyperslab for unknowns dataspace");
+      Driver_abortC("Error: unable to select hyperslab for unknowns dataspace");
     }
 
+    mem_dims_4d[0] = *local_blocks;
+    mem_dims_4d[1] = *nzb;
+    mem_dims_4d[2] = *nyb;
+    mem_dims_4d[3] = *nxb;
 
-    /* create the memory space -- we can get away with a simple memory space
-       for the unknowns, since we are passing a contiguous block of memory
-       now, and the block count is the last index in FORTRAN */
-    rank = 5;
-    dimens_5d[0] = *local_blocks;
-    dimens_5d[1] = *nzb;
-    dimens_5d[2] = *nyb;
-    dimens_5d[3] = *nxb;
-    dimens_5d[4] = 1;
-  } else {
+    } else {
     /* MPI rank owns zero blocks - create a memory space of
        size 1 so that H5Screate_simple does not abort */
-    rank = 5;
-    dimens_5d[0] = 1;
-    dimens_5d[1] = 1;
-    dimens_5d[2] = 1;
-    dimens_5d[3] = 1;
-    dimens_5d[4] = 1;
+    mem_dims_4d[0] = 1;
+    mem_dims_4d[1] = 1;
+    mem_dims_4d[2] = 1;
+    mem_dims_4d[3] = 1;
   }
 
-  memspace = H5Screate_simple(rank, dimens_5d, NULL);
+  memspace = H5Screate_simple(4, mem_dims_4d, NULL);
   if(memspace < 0) Driver_abortC("Error: negative return from memspace H5Screate_simple");
 
-  /* setting the transfer template */
+  /* obtain a copy of the file transfer property list */ 
   dxfer_template = H5Pcreate(H5P_DATASET_XFER);
-
-
-
-    /* ---------------------------------------------------------------------
-       platform dependent code goes here -- the access template must be
-       tuned for a particular filesystem blocksize.  some of these 
-       numbers are guesses / experiments, others come from the file system
-       documentation.
-       
-       The sieve_buf_size should be equal a multiple of the disk block size
-       ---------------------------------------------------------------------- */
-
-    /*
-#ifdef IBM
-    ierr = H5Pset_hyper_cache(dxfer_template, 1u, 0u);
-    ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);
-    ierr = H5Pset_btree_ratios(dxfer_template, 0.334, 0.333, 0.333); 
-
-     for best performance, set this to 0 
-    ierr = H5Pset_preserve(dxfer_template, 0u);  
-#endif
-    
-#ifdef TFLOPS
-    ierr = H5Pset_hyper_cache(dxfer_template, 1u, 0u);
-    ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_COLLECTIVE);
-    ierr = H5Pset_preserve(dxfer_template, 0u);  
-#endif
-
-#ifdef CHIBA
-    ierr = H5Pset_hyper_cache(dxfer_template, 1u, 0u);
-    ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);
-    ierr = H5Pset_preserve(dxfer_template, 0u);  
-#endif
-
-#ifdef SGI
-    ierr = H5Pset_hyper_cache(dxfer_template, 1u, 0u);
-    ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);
-    ierr = H5Pset_preserve(dxfer_template, 0u);  
-#endif
-
-    */
-
-    /* ----------------------------------------------------------------------
-       end of platform dependent data-transfer property list settings
-       ---------------------------------------------------------------------- */
-    /*not platform dependent, just a switchable mode*/
+  if(dxfer_template < 0) Driver_abortC("Error: negative return from dxfer_template H5Pcreate");
 #ifdef IO_HDF5_PARALLEL
-  if( HDF5_MODE == COLLECTIVE)
-    H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_COLLECTIVE);
-#endif
-  if(!*dowrite || *local_blocks <= 0) {
-    status = H5Sselect_none(dataspace);
-    if(status < 0) Driver_abortC("[" FILE_AT_LINE_C "] H5Sselect_none invalid return.");
-    status = H5Sselect_none(memspace);
-    if(status < 0) Driver_abortC("[" FILE_AT_LINE_C "] H5Sselect_none invalid return.");
+  if (HDF5_MODE == COLLECTIVE) {
+    herr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_COLLECTIVE);
+    assert(herr >= 0);
   }
+#endif
+
+  /* default is 'independent' mode */
+  /*ierr = H5Pset_dxpl_mpio(dxfer_template, H5FD_MPIO_INDEPENDENT);*/
+  /*ierr = H5Pset_preserve(dxfer_template, 0u);*/
+
+
+  /*!!DEV -kda I've removed the max and min parts for now */
+
   /* write the data */
+  if(!*dowrite || *local_blocks <= 0) {
+    ierr = H5Sselect_none(dataspace);
+    if(ierr < 0) Driver_abortC("[" FILE_AT_LINE_C "] H5Sselect_none invalid return.");
+    ierr = H5Sselect_none(memspace);
+    if(ierr < 0) Driver_abortC("[" FILE_AT_LINE_C "] H5Sselect_none invalid return.");
+  }
 #ifdef FLASH_IO_ASYNC_HDF5
   status = H5Dwrite_async(dataset, H5T_NATIVE_FLOAT, memspace, dataspace, 
-        dxfer_template, unknowns, io_es_id);
+                dxfer_template, unknowns,io_es_id);
 #else
   status = H5Dwrite(dataset, H5T_NATIVE_FLOAT, memspace, dataspace, 
-		    dxfer_template, unknowns);
+                dxfer_template, unknowns);
 #endif  
-
-    
-  if (status < 0){
-    printf("Error: Unable to write unknowns\n");
-    Driver_abortC("Error: Unable to write unknowns\n");
-  }
 
 #ifdef DEBUG_IO
   printf("UNKNOWNS: wrote unknowns, status = %d\n", (int) status);
 #endif
+  if (status < 0){
+      Driver_abortC("Error: Unable to write unknowns\n");
+  }
 
+  
   H5Pclose(dxfer_template);
-  H5Sclose(memspace);
+
+
+
+ TRY_AND_CHECK_IGNORE( H5Fflush(*file_identifier,H5F_SCOPE_GLOBAL) , "H5Fflush" )
+
   H5Pclose(dataset_plist);
+
+  H5Sclose(memspace); 
   H5Sclose(dataspace);
 #ifdef FLASH_IO_ASYNC_HDF5
   H5Dclose_async(dataset, io_es_id);
