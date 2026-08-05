@@ -115,6 +115,12 @@ subroutine bn_baderMa28(state,y,dydx,ratdum,nv,x,btemp,htry,eps,yscal,hdid,hnext
        &                 yerr(nmax),ysav(nmax),yseq(nmax),& 
        &                 dfdy(naij,nDummy),amat(naij),w(nmax),u
 
+  !! NaN/Inf guard for the step-acceptance test below.  bnfmax is the
+  !! largest finite real; bnfbad is a sentinel errmax large enough to
+  !! force a step rejection.
+  logical         :: badstep
+  real, parameter :: bnfmax = huge(1.0e0), bnfbad = 1.0e10
+
   real, parameter     ::   safe1 = 0.25e0, safe2 = 0.7e0, redmax=1.0e-5, & 
        &                  redmin = 0.7e0, tiny = 1.0e-30, scalmx = 0.1e0
 
@@ -243,9 +249,17 @@ subroutine bn_baderMa28(state,y,dydx,ratdum,nv,x,btemp,htry,eps,yscal,hdid,hnext
      !!   compute normalized error estimate
      if (k .ne. 1) then
         errmax = tiny
+        badstep = .false.
         do i=1,nv
+           !! A NaN or Inf here must reject the step.  max() cannot be relied
+           !! upon to propagate it, so test explicitly.  abs(v) .le. huge(1.0)
+           !! is .true. for every finite v and .false. only for NaN and +-Inf,
+           !! so this is a no-op on finite data.
+           if (.not. (abs(yerr(i)) .le. bnfmax)) badstep = .true.
+           if (.not. (abs(y(i)) .le. bnfmax)) badstep = .true.
            errmax = max(errmax,abs(yerr(i)/yscal(i)))
         enddo
+        if (badstep) errmax = bnfbad
         errmax   = errmax/eps   
         km = k - 1
         err(km) = (errmax/safe1)**(1.0e0/(2*km+1))

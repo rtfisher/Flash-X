@@ -100,6 +100,12 @@ subroutine bn_rosenGift(state,y,dydx,ratdum,n,x,btemp,htry,eps,yscal,hdid,hnext,
   integer, parameter  :: nmax=30, maxtry=400
   real :: errmax,h,xsav,dysav(nmax),err(nmax),g1(nmax),  &
           g2(nmax),g3(nmax),g4(nmax),ysav(nmax),xx
+
+  !! NaN/Inf guard for the step-acceptance test below.  bnfmax is the
+  !! largest finite real; bnfbad is a sentinel errmax large enough to
+  !! force a step rejection.
+  logical         :: badstep
+  real, parameter :: bnfmax = huge(1.0e0), bnfbad = 1.0e10
   real, parameter     ::    safety=0.9e0, grow=1.5e0, pgrow=-0.25e0,  &
        &           shrnk=0.5e0,  pshrnk=-1.0e0/3.0e0, errcon=0.1296e0
 
@@ -273,9 +279,17 @@ subroutine bn_rosenGift(state,y,dydx,ratdum,n,x,btemp,htry,eps,yscal,hdid,hnext,
 
    !!  determine the scaled accuracy
      errmax = 0.0e0
+     badstep = .false.
      do i=1,n
+        !! A NaN or Inf here must reject the step.  max() cannot be relied
+        !! upon to propagate it, so test explicitly.  abs(v) .le. huge(1.0)
+        !! is .true. for every finite v and .false. only for NaN and +-Inf,
+        !! so this is a no-op on finite data.
+        if (.not. (abs(err(i)) .le. bnfmax)) badstep = .true.
+        if (.not. (abs(y(i)) .le. bnfmax)) badstep = .true.
         errmax = max(errmax,abs(err(i)/yscal(i)))
      enddo
+     if (badstep) errmax = bnfbad
      errmax = errmax/eps
 
    !!  if the step succeded, compute the size of the next step and return
