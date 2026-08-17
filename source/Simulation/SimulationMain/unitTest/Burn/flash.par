@@ -1,0 +1,41 @@
+# Parameter file for the Burn unit test.
+#
+# The test drives the BurnIntegrate steppers directly; the mesh is present only
+# because the framework requires one, so it is kept as small as possible.
+
+# --- what the test itself does -------------------------------------------
+bn_testStepSize  = 0.1      # trial step handed to the stepper
+bn_testEps       = 1.e-6    # accuracy parameter
+bn_testTolerance = 1.e-4    # tolerance vs the analytic solution (eps is 1.e-6)
+bn_testInjectAt  = 3        # which RHS evaluation returns the non-finite value
+
+# --- the (unused) mesh ----------------------------------------------------
+sim_initDens = 1.e7
+sim_initTemp = 1.e9
+
+geometry = "cartesian"
+
+xmin = 0.0
+xmax = 1.0
+ymin = 0.0
+ymax = 1.0
+zmin = 0.0
+zmax = 1.0
+
+iGridSize = 8
+jGridSize = 1
+kGridSize = 1
+
+iProcs = 1
+jProcs = 1
+kProcs = 1
+
+# no evolution: Driver_evolveAll calls Burn_unitTest and returns
+nend  = 0
+tmax  = 0.0
+
+basenm = "burnUnitTest_"
+run_comment = "Burn unit test: step acceptance in the network integrators"
+
+# the test calls the steppers itself; keep the Burn unit itself switched off
+useBurn = .FALSE.

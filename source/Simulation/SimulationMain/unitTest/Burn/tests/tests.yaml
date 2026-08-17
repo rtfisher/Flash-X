@@ -1,0 +1,52 @@
+# YAML file for test information
+#
+#### Burn unit test
+# Drives the BurnIntegrate adaptive steppers directly and checks that a trial
+# step containing a NaN or an Inf is rejected rather than accepted as converged.
+#
+#### Motivation
+# The step-acceptance test in bn_baderGift / bn_rosenGift (and their Ma28
+# counterparts) accumulates a normalised error with max():
+#
+#     errmax = tiny
+#     do i=1,nv
+#        errmax = max(errmax, abs(yerr(i)/yscal(i)))
+#     enddo
+#     if (errmax .lt. 1.0) <accept>
+#
+# Fortran does not specify what max() returns when one operand is NaN.  Where it
+# returns the finite operand, errmax stays at tiny, the comparison succeeds, and
+# a step containing a NaN is accepted -- the poisoned value then propagates into
+# the abundances.  The steppers now test yerr and y for finiteness explicitly.
+# Regression target: Flash-X/Flash-X#892.
+#
+#### Success vs. Failure
+# This is a unit test, not a comparison test: there is no baseline file.  The
+# test writes "all results conformed with expected values." into unitTest_0000
+# only if every case passed.
+#
+# The guard is a no-op on finite data, so its absence cannot be detected by a
+# Composite or Comparison test -- the non-finite value has to be injected on
+# purpose, which is what this setup does.  Verified in both directions: with the
+# guard, all six cases pass; with the assignment `if (badstep) errmax = bnfbad`
+# commented out, the four injected cases fail with "a non-finite trial step was
+# accepted" while both controls still pass.
+#
+# On platforms where max() does propagate a NaN, errmax becomes NaN,
+# `errmax .lt. 1.0` is false, and the trial is rejected even without the
+# explicit guard -- so this test passes there either way.  With the guard it
+# passes everywhere; without it, it fails on exactly the platforms carrying the
+# defect.  It should never report a false failure.
+#
+#### NOTE ON BUILD FLAGS
+# The test creates NaN and Inf deliberately, so it must not be built with
+# trapping on invalid floating-point operations (-ffpe-trap=invalid with
+# gfortran, which appears in some FFLAGS_DEBUG).  Arithmetic on the injected
+# value would trap before the guard could reject it.
+#
+# Only the Gift steppers are exercised, so MA28 is never called at run time; the
+# Burn unit still declares LIBRARY MA28, so the link dependency remains.
+
+UnitTest/Burn/Aprox13:
+  setupOptions: -auto -1d +nofbs +a13 +noio
+  parfiles: flash.par

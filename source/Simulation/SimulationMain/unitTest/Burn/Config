@@ -1,0 +1,35 @@
+#  Configuration file for the Burn unit test
+#  Simulation/SimulationMain/unitTest/Burn
+#
+#  Setup with, for example:
+#    ./setup unitTest/Burn -auto -1d +a13 +noio
+#
+#  The test drives the BurnIntegrate steppers directly and does not evolve the
+#  grid, so the mesh exists only to satisfy the framework.  The network is
+#  present because the steppers reference Burn_data, whose arrays are sized to
+#  NSPECIES; any network will do.
+
+REQUIRES Driver
+REQUIRES Grid
+REQUIRES physics/sourceTerms/Burn/BurnMain/nuclearBurn
+REQUESTS physics/sourceTerms/Burn/unitTest
+
+# The Burn unit references the standard hydrodynamic variable set in its
+# initialisation, so declare it even though the test never evolves the mesh.
+VARIABLE dens TYPE: PER_VOLUME              # density
+VARIABLE temp                               # temperature
+VARIABLE pres                               # pressure
+VARIABLE eint TYPE: PER_MASS                # specific internal energy
+VARIABLE ener TYPE: PER_MASS                # specific total energy
+VARIABLE gamc                               # sound-speed gamma
+VARIABLE game                               # energy gamma
+VARIABLE velx TYPE: PER_MASS                # x-velocity
+VARIABLE vely TYPE: PER_MASS                # y-velocity
+VARIABLE velz TYPE: PER_MASS                # z-velocity
+VARIABLE shok                               # shock detector, read by Burn's shock switch
+
+D sim_initDens   Uniform density used to fill the (unused) mesh
+PARAMETER sim_initDens  REAL  1.e7   [ 0.0+ ... ]
+
+D sim_initTemp   Uniform temperature used to fill the (unused) mesh
+PARAMETER sim_initTemp  REAL  1.e9   [ 0.0+ ... ]

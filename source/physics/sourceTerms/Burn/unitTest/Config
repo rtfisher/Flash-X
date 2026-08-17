@@ -1,0 +1,24 @@
+# Configuration file for the Burn unit test implementation
+# [source/physics/sourceTerms/Burn/unitTest]
+#
+# Requested by Simulation/SimulationMain/unitTest/Burn.  Replaces the
+# Burn_unitTest stub at the top of the Burn unit with the real implementation.
+
+D bn_testStepSize    Trial step size htry handed to the stepper.  Large enough
+D &                  that a clean step is accepted in full, so that a rejected
+D &                  step is unambiguous.
+PARAMETER bn_testStepSize   REAL    0.1     [ 0.0+ ... ]
+
+D bn_testEps         Accuracy parameter eps handed to the stepper.
+PARAMETER bn_testEps        REAL    1.e-6   [ 0.0+ ... ]
+
+D bn_testTolerance   Tolerance on the relative error of the integrated solution
+D &                  measured against the analytic solution of the test ODE.
+PARAMETER bn_testTolerance  REAL    1.e-4   [ 0.0+ ... ]
+
+D bn_testInjectAt    Which evaluation of the test right-hand side returns the
+D &                  non-finite value.  Must be at least 2, so that the initial
+D &                  derivative computed before the stepper is called stays
+D &                  finite: the case under test is a bad trial step, not bad
+D &                  input.
+PARAMETER bn_testInjectAt   INTEGER 3       [ 2 ... ]

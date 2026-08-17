@@ -140,6 +140,14 @@ Module Burn_interface
      end subroutine Burn_makeAbundanceYeConsistent
   end interface
 
+  interface Burn_unitTest
+     subroutine Burn_unitTest(fileUnit, perfect)
+       implicit none
+       integer, intent(in) :: fileUnit
+       logical, intent(out) :: perfect
+     end subroutine Burn_unitTest
+  end interface
+
 end Module Burn_interface
 
 
