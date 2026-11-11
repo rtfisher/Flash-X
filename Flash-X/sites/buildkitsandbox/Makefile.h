@@ -59,18 +59,25 @@ PP      = -D
 #  (ex. FFLAGS) to the proper set of flags (ex. FFLAGS_OPT).
 #----------------------------------------------------------------------------
 
+# GCC >= 10 turns MPI argument-type mismatches into errors unless
+# -fallow-argument-mismatch is given, and GCC 9 (Ubuntu 20.04) rejects that
+# flag as unknown.  Pick the flag from the compiler's major version so this
+# site file works on both the 20.04 and 24.04 images.
+GFORTRAN_MAJOR := $(shell $(FCOMP) -dumpversion 2>/dev/null | cut -d. -f1)
+ARG_MISMATCH_FLAG := $(shell [ "0$(GFORTRAN_MAJOR)" -ge 10 ] && echo -fallow-argument-mismatch || echo -Wno-argument-mismatch)
+
 FFLAGS_OPT = -ggdb -c -O2 -fdefault-real-8 -fdefault-double-8 \
--Wuninitialized -Wno-argument-mismatch -I${HDF5_PATH_INC} -fcommon \
+-Wuninitialized $(ARG_MISMATCH_FLAG) -I${HDF5_PATH_INC} -fcommon \
 
 FFLAGS_DEBUG = -ggdb -c -O0 -fdefault-real-8 -fdefault-double-8 \
 -pedantic -Wall -Wextra -Waliasing \
 -Wsurprising -Wconversion -Wunderflow \
 -ffpe-trap=invalid,zero,overflow -fbounds-check \
 -fimplicit-none -fstack-protector-all \
--Wno-argument-mismatch -I${HDF5_PATH_INC}
+$(ARG_MISMATCH_FLAG) -I${HDF5_PATH_INC}
 
 FFLAGS_TEST = -ggdb -c -fdefault-real-8 -fdefault-double-8 \
--ffree-line-length-none -Wno-argument-mismatch -I${HDF5_PATH_INC}
+-ffree-line-length-none $(ARG_MISMATCH_FLAG) -I${HDF5_PATH_INC}
 
 FFLAGS_HYPRE = -I${HYPRE_PATH}/include
 
