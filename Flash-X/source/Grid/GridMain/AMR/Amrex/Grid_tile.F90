@@ -1,6 +1,6 @@
 !!****ih* source/Grid/GridMain/AMR/Amrex/Grid_tile
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2024 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ module Grid_tile
         procedure, public :: getDataPtr
         procedure, public :: releaseDataPtr
         procedure, public :: enclosingBlock
+        procedure, public :: fillTileCInfo
     end type Grid_tile_t
 
 contains
@@ -254,9 +255,12 @@ contains
 
         use gr_physicalMultifabs,   ONLY : unk, &
                                            gr_scratchCtr, &
-                                           facevarx, facevary, facevarz
+                                           facevars
 #ifdef USE_LEVELWIDE_FLUXES
         use gr_physicalMultifabs,   ONLY : fluxes
+#  if NDIM < MDIM
+        use gr_physicalMultifabs,   ONLY : gr_fakeEmpty4
+#  endif
 #endif
 
         class(Grid_tile_t), intent(IN),  target   :: this
@@ -320,19 +324,19 @@ contains
              dataPtr(lo(1):, lo(2):, lo(3):, 1:) => unk     (ilev)%dataptr(igrd)
           case(FACEX)
 #if NFACE_VARS > 0
-             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevarx(ilev)%dataptr(igrd)
+             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevars(IAXIS, ilev)%dataptr(igrd)
 #else
              nullify(dataPtr)
 #endif
           case(FACEY)
 #if NFACE_VARS > 0 && NDIM >= 2
-             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevary(ilev)%dataptr(igrd)
+             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevars(JAXIS, ilev)%dataptr(igrd)
 #else
              nullify(dataPtr)
 #endif
           case(FACEZ)
 #if NFACE_VARS > 0 && NDIM == 3
-             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevarz(ilev)%dataptr(igrd)
+             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => facevars(KAXIS, ilev)%dataptr(igrd)
 #else
              nullify(dataPtr)
 #endif
@@ -342,10 +346,14 @@ contains
           case(FLUXY)
 #  if NDIM >= 2
              dataPtr(lo(1):, lo(2):, lo(3):, 1:) => fluxes(ilev, JAXIS)%dataptr(igrd)
+#  else
+             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => gr_fakeEmpty4
 #  endif
           case(FLUXZ)
 #  if NDIM == 3
              dataPtr(lo(1):, lo(2):, lo(3):, 1:) => fluxes(ilev, KAXIS)%dataptr(igrd)
+#  else
+             dataPtr(lo(1):, lo(2):, lo(3):, 1:) => gr_fakeEmpty4
 #  endif
 #elif NFLUXES > 0
           case(FLUXX)
@@ -398,5 +406,63 @@ contains
         nullify(dataPtr)
     end subroutine releaseDataPtr
 
-end module Grid_tile
+    subroutine fillTileCInfo(this, cInfo)
+        use Orchestration_interfaceTypeDecl, ONLY: Orchestration_tileCInfo_t
+        use Grid_data, ONLY: gr_useOrchestration
+        use amrex_amrcore_module, ONLY : amrex_geom
+        use,intrinsic :: iso_c_binding
+        class(Grid_tile_t), intent(IN)                :: this
+        type(Orchestration_tileCInfo_t),intent(OUT)   :: cInfo
+        real,pointer,contiguous :: fBlkPtr(:,:,:,:)
 
+#ifdef FLASHX_ORCHESTRATION
+#ifdef FLASHX_ORCHESTRATION_MILHOJA
+#include "Milhoja.h"
+#ifndef RUNTIME_MUST_USE_TILEITER
+        if (gr_useOrchestration) then
+           cInfo % CInts % nCcComp      = NUNK_VARS
+           cInfo % CInts % nFluxComp    = NFLUXES
+           cInfo % CInts % loGC(1:MDIM) = this % blklimitsGC(LOW,:)
+           cInfo % CInts % hiGC(1:MDIM) = this % blkLimitsGC(HIGH,:)
+           cInfo % CInts % lo(1:MDIM)   = this % limits(LOW,:)
+           cInfo % CInts % hi(1:MDIM)   = this % limits(HIGH,:)
+           cInfo % CInts % ndim         = NDIM
+           cInfo % CInts % level        = this % level
+           cInfo % CInts % gridIdxOrBlkId = this % grid_index
+           cInfo % CInts % tileIdx      = this % tile_index ! may not be meaningful
+
+           cInfo % CReals % deltas(1:MDIM) = 0.0
+           cInfo % CReals % deltas(1:NDIM) = amrex_geom(this%level - 1)%dx(1:NDIM)
+
+           cInfo % CPtrs % ccBlkPtr = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(IAXIS) = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(JAXIS) = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(KAXIS) = C_NULL_PTR
+
+           nullify(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, CENTER)
+           if(associated(fBlkPtr)) cInfo % CPtrs % ccBlkPtr = c_loc(fBlkPtr)
+#ifdef USE_LEVELWIDE_FLUXES
+           nullify(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, FLUXX)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(IAXIS) = c_loc(fBlkPtr)
+           nullify(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, FLUXY)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(JAXIS) = c_loc(fBlkPtr)
+           nullify(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, FLUXZ)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(KAXIS) = c_loc(fBlkPtr)
+#endif
+        end if
+#endif
+#endif
+#endif
+
+    end subroutine fillTileCInfo
+end module Grid_tile
+! Local Variables:
+! f90-program-indent: 4
+! f90-do-indent: 4
+! f90-type-indent: 4
+! indent-tabs-mode: nil
+! End:

@@ -125,7 +125,7 @@ class LibUnion(dict):
      # does ...lib/libname/libinfo.py exist?
      if os.path.isfile(os.path.join(libDir,'libinfo.py')):
        # use the new method of getting info
-       sys.path.insert(1,libDir) # ask python to search here
+       sys.path.insert(1,libDir) # ask python3 to search here
        # call the libinfo function in libinfo.py and store its result
        libFlags = __import__("libinfo").libinfo(absLibDir=libDir,
                               relLibDir=relLibDir,
@@ -247,7 +247,7 @@ class LibUnion(dict):
         status = subprocess.check_call('./build.sh', shell=False)
         GVars.out.put("./build.sh returned %s"% status, globals.DEBUG)
         if status:  # normally unreachable, check_call should have raised an exception
-           raise SetupError("Library build in %s failed! (status %s)"% (libDir,status))
+            raise SetupError("Library build in %s failed! (status %s)"% (libDir,status))
      else:
         raise SetupError(USAGE % locals())
      os.chdir(pwd)

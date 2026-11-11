@@ -35,7 +35,7 @@
 #include "UHD.h"
 #include "constants.h"
 
-subroutine Hydro(simTime, dt, dtOld)
+subroutine Hydro(simTime, dt, dtOld, sweepOrder)
   use Grid_interface,    ONLY : Grid_fillGuardCells, &
                                 Grid_getTileIterator, &
                                 Grid_releaseTileIterator, &
@@ -44,7 +44,7 @@ subroutine Hydro(simTime, dt, dtOld)
                                 Logfile_stampMessage
   use Timers_interface,  ONLY : Timers_start, &
                                 Timers_stop
-  use Eos_interface,     ONLY : Eos_wrapped
+  use Eos_interface,     ONLY : Eos_multiDim
   use Hydro_interface,   ONLY : Hydro_prepareBuffers, &
                                 Hydro_freeBuffers
   use Hydro_data,        ONLY : hy_useHydro, &
@@ -62,7 +62,8 @@ subroutine Hydro(simTime, dt, dtOld)
   implicit none
 
   real, intent(IN) ::  simTime, dt, dtOld
-  
+  integer, optional, intent(IN) :: sweepOrder
+
   real, pointer :: Uout(:,:,:,:)
   real, pointer :: Uin(:,:,:,:)
   real, pointer :: flX(:,:,:,:)
@@ -158,7 +159,7 @@ subroutine Hydro(simTime, dt, dtOld)
                                   flX, flY, flZ, lbound(flX), &
                                   deltas, dt)
 
-     call Eos_wrapped(hy_eosModeAfter, tileDesc%limits, Uout)
+     call Eos_multiDim(hy_eosModeAfter, tileDesc%limits,tileDesc%blkLimitsGC(LOW,:), Uout)
 
      call tileDesc%releaseDataPtr(Uin, CENTER)
      call tileDesc%releaseDataPtr(flX, FLUXX)

@@ -29,8 +29,6 @@ ELSE
 ENDIF
 
 
-REQUIRES physics/Eos/localAPI
-
 D eintSwitch   a rarely used switch which ensures that internal energy calculations
 D &            maintain sufficient precision. Important only if energyTotal is dominated by energyKinetic.
 D &            If (energyInternal < eintSwitch*energyKinetic) then
@@ -57,3 +55,11 @@ D & See code in eos_idealGamma for the meaning of the various choices.
 D & The choice that corresponds most closely to the Sackur-Tetrode equation 
 D & in physical units should be 3, closely followed by 2.
 PARAMETER eos_entrEleScaleChoice     INTEGER 6	[1 to 8]
+
+VARIANTS Null
+
+USESETUPVARS Milhoja
+IF Milhoja
+  REQUIRES physics/Eos/EosMain/GPU_interface
+  VARIANTS GPU
+ENDIF

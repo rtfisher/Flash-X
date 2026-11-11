@@ -2,16 +2,48 @@
 REQUIRES physics/ImBound/localAPI
 REQUIRES numericalTools/Stencils/StencilsLevelset
 
-#--------------------------------------------------------------------------------
+PPDEFINE IMBOUND_MAIN
+
 D useImBound   Should the ImBound unit be used?
 PARAMETER useImBound BOOLEAN TRUE
 
-#---------------------------------------------------------------------------------
-PARAMETER ib_rhoSolid            REAL     1.0      # Density ratio of solid/liquid
-PARAMETER ib_muSolid             REAL     1.0      # Viscosity ratio of solid/liquid
-PARAMETER ib_thcoSolid           REAL     1.0      # Thermal conducitivity of solid/liquid
-PARAMETER ib_CpSolid             REAL     1.0      # Specific heat of solid/liquid
-PARAMETER ib_lsIt                INTEGER  2        # Level Set redistance iterations...
+D ib_lsIt Level Set redistance iterations
+PARAMETER ib_lsIt                    	INTEGER	2
 
-#---------------------------------------------------------------------------------
-VARIABLE lmda          # Level set distance function for immersed boundary
+D ib_numBodies Number of bodies
+PARAMETER ib_numBodies               	INTEGER	1
+
+D ib_bodyName Prefix of HDF5 ibd file
+PARAMETER ib_bodyName                	STRING	"flash"
+
+D ib_enbaleSelectiveMapping Allow for selective mapping based on block locality
+PARAMETER ib_enableSelectiveMapping	BOOLEAN	FALSE
+
+D ib_bruteForceMapping Allow for brute force mapping. Most expensive
+PARAMETER ib_bruteForceMapping		BOOLEAN	FALSE
+
+D ib_annQueries Number of approximate nearest neighbor queries
+PARAMETER ib_annQueries			INTEGER 3
+
+D lmda_variable Level set distance function for immersed boundary
+VARIABLE lmda
+
+D hln0_variable Variable to store RHS for level set advection
+VARIABLE hln0
+
+D nmlx_variable Level set normal in x-direction
+VARIABLE nmlx TYPE:GENERIC
+
+D nmly_variable Level set normal in y-direction
+VARIABLE nmly TYPE:GENERIC
+
+USESETUPVARS nDim
+IF nDim == 3
+D nmlz_variable Level set normal in z-direction
+VARIABLE nmlz TYPE:GENERIC
+END IF
+
+D lcrv_variable Variable to store curvature for lmda level set
+VARIABLE lcrv
+
+LIBRARY ANN

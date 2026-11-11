@@ -1,6 +1,6 @@
 !!****if* source/Driver/DriverMain/MoL/Driver_evolveAll
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2023 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ subroutine Driver_evolveAll()
    call MoL_regrid
 
    call Logfile_stamp('Entering evolution loop', '[Driver_evolveAll]')
-   call Profiler_start("FLASH_evolution")
+   call Profiler_start("FLASHX_EVOLUTION")
    call Timers_start("evolution")
 
    call Grid_getMaxRefinement(maxLev, mode=1) !mode=1 means lrefine_max, which does not change during sim.
@@ -367,7 +367,7 @@ subroutine Driver_evolveAll()
   !!******************************************************************************
 
    call Timers_stop("evolution")
-   call Profiler_stop("FLASH_evolution")
+   call Profiler_stop("FLASHX_EVOLUTION")
    call Logfile_stamp('Exiting evolution loop', '[Driver_evolveAll]')
    !if a file termination, this may already be done.
    if (.NOT. endRun) call IO_outputFinal()

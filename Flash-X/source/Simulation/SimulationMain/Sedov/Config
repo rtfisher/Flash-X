@@ -66,10 +66,6 @@ PARAMETER sim_profFileName        STRING  "sedovSolution.dat"
 DATAFILES sedovSolution.dat
 DATAFILES sedovSolutionMod*.dat
 
-# Workshop analysis scripts (LAUNCH 2026): staged into the object directory
-# so students can run them next to their output.
-DATAFILES analysis
-
 D sim_bcSetBdryVar Whether to set the "bdry" variable in unk (if it exists) to 1
 D & in guard cells at reflecting boundaries. Doing this will entice Hydro
 D & implementations to lower reconstruction order in adjacent cells, and possibly
@@ -94,6 +90,16 @@ D & requested refinement level, either explicitly as a positive integer
 D & or as -1 for the largest currently realized level.
 PARAMETER sim_integralsLevel	   INTEGER	-1	[-1, 1 ...]
 
+## The following directive is intended to be of use if (a) Milhoja is used
+## (as detected by the presence of a nonempty  "Milhoja" setup variable)
+## or if (b) MoL is used (as detected by the "TimeAdvance" variable
+## having the value "MOL"; both case-insensitively).
+## However, the effect of EVOLVEDVAR to change the order of property
+## variables should apply even outside of those cases.
+## The following directive can be added here for purposes of testing
+## and of demonstration.
+# These variables should appear in UNK first, in this order:
+#EVOLVEDVAR DENS VELX VELY VELZ PRES ENER TEMP EINT GAMC GAME
 
 # VARIABLE declarations for analytical solution from file here,
 # other VARIABLES declared in Hydro etc.

@@ -1,21 +1,23 @@
-!!****if* source/physics/Eos/EosMain/Eos_guardCells
-!! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!> @copyright Copyright 2023 UChicago Argonne, LLC and contributors
 !!
-!!  Licensed under the Apache License, Version 2.0 (the "License");
-!!  you may not use this file except in compliance with the License.
+!! @licenseblock
+!!   Licensed under the Apache License, Version 2.0 (the "License");
+!!   you may not use this file except in compliance with the License.
 !!
-!!  Unless required by applicable law or agreed to in writing, software
-!!  distributed under the License is distributed on an "AS IS" BASIS,
-!!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!!  See the License for the specific language governing permissions and
-!!  limitations under the License.
+!!   Unless required by applicable law or agreed to in writing, software
+!!   distributed under the License is distributed on an "AS IS" BASIS,
+!!   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!!   See the License for the specific language governing permissions and
+!!   limitations under the License.
+!! @endlicenseblock
 !!
-!! NAME
+!! @file
+!> @ingroup physics_Eos
 !!
-!!  Eos_guardCells
+!! @brief Main implementation for applying Eos to guardcells at fine-coarse boundaries
+!! 
+!! @subref{Eos_guardCells}
 !!
-!!  For more details see the documentation of the NULL implementation
 !!
 !!***
 
@@ -26,7 +28,7 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
 
   use Grid_tile,      ONLY : Grid_tile_t
   use Grid_interface, ONLY: Grid_getBlkIndexLimits, Grid_getBlkNeighLevels
-  use Eos_interface,  ONLY : Eos_wrapped
+  use Eos_interface,  ONLY : Eos_multiDim
 
   implicit none
   integer,intent(IN) :: eosMode
@@ -47,6 +49,7 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
   integer :: myRefine
   logical :: skippingSrl
   integer :: blockID ! ID of block in current processor - really only valid with PARAMESH...
+  integer, dimension(MDIM) :: lo
 
 
   if(present(skipSrl)) then
@@ -61,13 +64,14 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
      return
   end if
 #endif
+  
 
   blkLimitsGC(LOW,:)=(/lbound(solnData,IX),lbound(solnData,IY),lbound(solnData,IZ) /)
   blkLimitsGC(HIGH,:)=(/ubound(solnData,IX),ubound(solnData,IY),ubound(solnData,IZ) /)
   blkLimits=1
   blkLimits(LOW,1:NDIM)=blkLimitsGC(LOW,1:NDIM)+NGUARD
   blkLimits(HIGH,1:NDIM)=blkLimitsGC(HIGH,1:NDIM)-NGUARD
-
+  lo(:) = blkLimitsGC(LOW,:)
   if(present(layers)) then
      nlayers(:,LOW)=layers
      nlayers(:,HIGH)=layers
@@ -123,10 +127,10 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
 
   eosRange(LOW,IAXIS) = blkLimits(LOW,IAXIS)-nlayers(IAXIS,LOW)
   eosRange(HIGH,IAXIS) = blkLimits(LOW,IAXIS)-1
-  call Eos_wrapped(eosMode,eosRange,solnData)
+  call Eos_multiDim(eosMode,eosRange,lo,solnData)
   eosRange(LOW,IAXIS) = blkLimits(HIGH,IAXIS)+1
   eosRange(HIGH,IAXIS) = blkLimits(HIGH,IAXIS)+nlayers(IAXIS,HIGH)
-  call Eos_wrapped(eosMode,eosRange,solnData)
+  call Eos_multiDim(eosMode,eosRange,lo,solnData)
 
 # if NDIM > 1
      if (corners) then
@@ -137,10 +141,10 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
      end if
      eosRange(LOW,JAXIS) = blkLimits(LOW,JAXIS)-nlayers(JAXIS,LOW)
      eosRange(HIGH,JAXIS) = blkLimits(LOW,JAXIS)-1
-     call Eos_wrapped(eosMode,eosRange,solnData)
+     call Eos_multiDim(eosMode,eosRange,lo,solnData)
      eosRange(LOW,JAXIS) = blkLimits(HIGH,JAXIS)+1
      eosRange(HIGH,JAXIS) = blkLimits(HIGH,JAXIS)+nlayers(JAXIS,HIGH)
-     call Eos_wrapped(eosMode,eosRange,solnData)
+     call Eos_multiDim(eosMode,eosRange,lo,solnData)
 # endif
 
 # if NDIM > 2
@@ -152,10 +156,10 @@ subroutine Eos_guardCells(eosMode, solnData,corners,layers,skipSrl,blockDesc)
      end if
      eosRange(LOW,KAXIS) = blkLimits(LOW,KAXIS)-nlayers(KAXIS,LOW)
      eosRange(HIGH,KAXIS) = blkLimits(LOW,KAXIS)-1
-     call Eos_wrapped(eosMode,eosRange,solnData)
+     call Eos_multiDim(eosMode,eosRange,lo,solnData)
      eosRange(LOW,KAXIS) = blkLimits(HIGH,KAXIS)+1
      eosRange(HIGH,KAXIS) = blkLimits(HIGH,KAXIS)+nlayers(KAXIS,HIGH)
-     call Eos_wrapped(eosMode,eosRange,solnData)
+     call Eos_multiDim(eosMode,eosRange,lo,solnData)
 # endif
 
 #ifdef FLASH_GRID_PARAMESH
@@ -219,7 +223,7 @@ contains
                 ir =  1
              end if
              eosRange(:,KAXIS) = surr2lim(:,k,KAXIS)
-             call Eos_wrapped(eosMode,eosRange,solnData); numEosCalls = numEosCalls+1
+             call Eos_multiDim(eosMode,eosRange,lo,solnData); numEosCalls = numEosCalls+1
              done(il:ir,jl:jr,k) = .TRUE.
           end if
        end do
@@ -250,7 +254,7 @@ contains
              ir =  1
           end if
           eosRange(:,JAXIS) = surr2lim(:,j,JAXIS)
-          call Eos_wrapped(eosMode,eosRange,solnData); numEosCalls = numEosCalls+1
+          call Eos_multiDim(eosMode,eosRange,lo,solnData); numEosCalls = numEosCalls+1
           done(il:ir,j,kl:kr) = .TRUE.
        end if
     end do
@@ -282,7 +286,7 @@ contains
           end if
 #         endif
           eosRange(:,IAXIS) = surr2lim(:,i,IAXIS)
-          call Eos_wrapped(eosMode,eosRange,solnData); numEosCalls = numEosCalls+1
+          call Eos_multiDim(eosMode,eosRange,lo,solnData); numEosCalls = numEosCalls+1
           done(i,jl:jr,kl:kr) = .TRUE.
        end if
     end do
@@ -304,7 +308,7 @@ contains
                 end if
                 eosRange(:,IAXIS) = surr2lim(:,i,IAXIS)
                 eosRange(:,JAXIS) = surr2lim(:,j,JAXIS)
-                call Eos_wrapped(eosMode,eosRange,solnData); numEosCalls = numEosCalls+1
+                call Eos_multiDim(eosMode,eosRange,lo,solnData); numEosCalls = numEosCalls+1
                 done(i,j,kl:kr) = .TRUE.
              end if
           end do
@@ -321,7 +325,7 @@ contains
                    eosRange(:,IAXIS) = surr2lim(:,i,IAXIS)
                    eosRange(:,JAXIS) = surr2lim(:,j,JAXIS)
                    eosRange(:,KAXIS) = surr2lim(:,k,KAXIS)
-                   call Eos_wrapped(eosMode,eosRange,solnData); numEosCalls = numEosCalls+1
+                   call Eos_multiDim(eosMode,eosRange,lo,solnData); numEosCalls = numEosCalls+1
                 end if
              end do
           end do

@@ -43,7 +43,7 @@ class LinkFileList:
     # extensions of files are never deleted (unless the source is deleted)
     self.derExt = [".o",".mod"]
     # precedence for extensions in each group
-    groups = [['.f90', '.F90', '.f', '.c', '.F', '.C', '.cxx', '.cu'], '.py', '.fh', ['.h','.hxx']]
+    groups = [['.f90', '.F90', '.f', '.c', '.F', '.C', '.cxx', '.cu'], '.py', '.fh', '.finc', ['.h','.hxx']]
     #put extensions that aren't grouped into a one-item list (save typing)
     self.groupdict = {} # dictionary mapping an extension to list of related extensions
     self.exts = []
@@ -77,9 +77,10 @@ class LinkFileList:
      return None
 
 
-  def doLINKIFOverrides(self, unitlist, udpairs):
+  def doLINKIFOverrides(self, unitlist, udpairs, memo):
     # unitlist = list of names of all units used in this simulation
     # udpairs = list of all (fname,uname) pairs found in "LINKIF" statements.
+    # memo = locations of -mc files that have been found, see linkFile.
     functionOverrideList = []
     allLinkifFunctions = {}
 
@@ -111,6 +112,11 @@ class LinkFileList:
         # throw out all but the first 2, and join them back up
         # file = "a/b/c/d.e.f.g" -> outfile = "d.e"
         outfile = ".".join( os.path.basename(file).split(".")[:2])
+        if outfile.endswith(".F90"):
+          for u in memo.keys():
+            if outfile+"-mc" in memo[u]:
+              GVars.out.put(f"doLINKIFOverrides: {sourcePathShow(file)} shadows {outfile+'-mc'} in {u}.",globals.WARN)
+              memo[u].remove(outfile+"-mc")
         self.addLink(os.path.join(GVars.sourceDir, file), outfile)
 
 
@@ -149,7 +155,7 @@ class LinkFileList:
      GVars.out.pop()
 
 
-  def linkFiles(self, fromdir):
+  def linkFiles(self, fromdir, memo):
     """
     Link files in with right extension in fromdir to object directory
 
@@ -163,6 +169,10 @@ class LinkFileList:
 
     NOTE: We dont actually link the files, only queue them up for linking. The real
     linking is done by calling reallyLink method
+
+    The memo stores the locations of -mc files that have been found so far.
+    It is passed in here so that shadowing by "forgetting" can be implented
+    as a side effect.
     """
     
     files = []
@@ -189,6 +199,11 @@ class LinkFileList:
         # throw out all but the first 2, and join them back up
         # file = "a/b/c/d.e.f.g" -> outfile = "d.e"
         outfile = ".".join( os.path.basename(file).split(".")[:2])
+        if outfile.endswith(".F90"):
+          for u in memo.keys():
+            if outfile+"-mc" in memo[u]:
+              GVars.out.put(f"LinkFileList: {sourcePathShow(file)} shadows {outfile+'-mc'} in {u}.", globals.WARN)
+              memo[u].remove(outfile+"-mc")
         self.addLink(file, outfile)
 
 
@@ -244,6 +259,7 @@ class LinkFileList:
   def isSetupFile(self,fname):
       for prefix in globals.noClobberExceptionList:
           if fname[:len(prefix)] == prefix: return 1
+      if fname[0:4] == ".nfs": return 1
       return 0 
 
   def cleanObjectDir(self):

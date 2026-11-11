@@ -36,17 +36,21 @@ module gr_physicalMultifabs
     implicit none
 
     public :: unk
-    public :: facevarx
-    public :: facevary
-    public :: facevarz
+    public :: facevars
 
     type(amrex_multifab), allocatable, target :: unk(:)
-    type(amrex_multifab), allocatable         :: facevarx(:)
-    type(amrex_multifab), allocatable         :: facevary(:)
-    type(amrex_multifab), allocatable         :: facevarz(:)
     type(amrex_multifab), allocatable         :: gr_scratchCtr(:)
+    type(amrex_multifab), allocatable         :: facevars(:, :)
 
     type(amrex_multifab),     allocatable :: fluxes(:, :)
+#if N_DIM < 3
+    ! Sometimes, pointer arrays need to point somewhere, just anywhere, in order
+    ! to have valid code. This is particularly useful when such arrays are
+    ! passed as actual arguments to subprograms for corresponding non-pointer
+    ! dummy arguments whose values will never be used or set, but which still
+    ! need to be present.
+    real,save, target :: gr_fakeEmpty4(0,0,0,0) ! fake 4-dimensional array target
+#endif
     type(gr_fluxregister_t),  allocatable :: flux_registers(:)
 
 end module gr_physicalMultifabs

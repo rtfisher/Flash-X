@@ -1,0 +1,319 @@
+!!***if* source/physics/sourceTerms/Heater/HeaterMain/Heater_applyBCToRegion
+!!
+!! NOTICE
+!!  Copyright 2023 UChicago Argonne, LLC and contributors
+!!
+!!  Licensed under the Apache License, Version 2.0 (the "License");
+!!  you may not use this file except in compliance with the License.
+!!
+!!  Unless required by applicable law or agreed to in writing, software
+!!  distributed under the License is distributed on an "AS IS" BASIS,
+!!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!!  See the License for the specific language governing permissions and
+!!  limitations under the License.
+!!
+!!
+!!***
+
+#include "constants.h"
+#include "Simulation.h"
+
+subroutine Heater_applyBCToRegion(level, ivar, gridDataStruct, regionData, coordinates, regionSize, &
+                                  guard, face, axis, secondDir, thirdDir)
+
+   use Driver_interface, ONLY: Driver_abort
+   use Heater_data, ONLY: htr_heaterInfo, htr_numHeaters, htr_yMin, htr_yMax
+   use Heater_type, ONLY: Heater_type_t
+   use Grid_interface, ONLY: Grid_getDeltas
+   use RuntimeParameters_interface, ONLY: RuntimeParameters_get
+
+   implicit none
+   integer, intent(IN) :: level, ivar, gridDataStruct
+   integer, dimension(REGION_DIM), intent(IN) :: regionSize
+   real, dimension(regionSize(BC_DIR), &
+                   regionSize(SECOND_DIR), &
+                   regionSize(THIRD_DIR), &
+                   regionSize(STRUCTSIZE)), intent(INOUT) :: regionData
+   real, dimension(regionSize(BC_DIR), &
+                   regionSize(SECOND_DIR), &
+                   regionSize(THIRD_DIR), &
+                   MDIM), intent(IN) :: coordinates
+   integer, intent(IN) :: guard, face, axis, secondDir, thirdDir
+
+!-------------------------------------------------------------------------------------------
+   integer :: je, ke
+   integer :: i, j, k, htr, offset
+   type(Heater_type_t), pointer :: heater
+   real, dimension(MDIM)  :: del
+   real :: dynamicAngle, veli
+   real :: wallDfun, thcoBC
+   real :: thcoGas
+
+   call Grid_getDeltas(level, del)
+
+   call RuntimeParameters_get("mph_thcoGas", thcoGas)
+
+   thcoBC = thcoGas
+
+   je = regionSize(SECOND_DIR)
+   ke = regionSize(THIRD_DIR)
+
+   offset = 2*guard+1
+
+!   if (face == HIGH) call Driver_abort('[Heater_applyBCToRegion] not configured for face == HIGH')
+
+   if (face == HIGH) then
+      if (ivar == TEMP_VAR) then
+         do k = 1, ke
+            do j = 1, je
+               do i = 1, guard
+                  do htr = 1, htr_numHeaters
+
+                     heater => htr_heaterInfo(htr)
+
+                     if (coordinates(i, j, k, IAXIS) .gt. heater%xMin .and. &
+                         coordinates(i, j, k, IAXIS) .lt. heater%xMax &
+#if NDIM==MDIM
+                         .and. &
+                         coordinates(i, j, k, KAXIS) .gt. heater%zMin .and. &
+                         coordinates(i, j, k, KAXIS) .lt. heater%zMax &
+#endif
+                         ) then
+
+                        if (abs(0.5*(heater%yMax+heater%yMin)-htr_yMin) .gt. &
+                            abs(0.5*(heater%yMax+heater%yMin)-htr_yMax)) then
+
+                           if (heater%heatFluxFlg) then
+
+                              wallDfun = 0.5*(regionData(guard, j, k, DFUN_VAR)+ &
+                                              regionData(guard+1, j, k, DFUN_VAR))
+
+                              if (wallDfun .le. 0) then
+                                 thcoBC = 1.0
+                              else
+                                 thcoBC = thcoGas
+                              end if
+
+                              regionData(offset-i, j, k, ivar) = &
+                                 ((heater%heatFlux)*del(axis))*(offset-2*i)/(thcoBC)+ &
+                                 regionData(i, j, k, ivar)
+
+                              !regionData(guard+i, j, k, ivar) = &
+                              !                        ((heater%heatFlux)*del(axis))/(thcoBC) +&
+                              !                        regionData(guard+i-1, j, k, ivar)
+                              !regionData(guard+i, j, k, ivar) = &
+                              !                        0.33*(((heater%heatFlux)*4*del(axis))/(thcoBC) +&
+                              !                        regionData(guard+i-1, j, k, ivar) +&
+                              !                        3*regionData(guard+i-2, j, k, ivar)-&
+                              !                        regionData(guard+i-3, j, k, ivar))
+
+                           else
+                              if (heater%varTempFlg) then
+
+                                 regionData(offset-i, j, k, ivar) = &
+                                    2*(heater%C3*(coordinates(i, j, k, IAXIS))**3+ &
+                                       heater%C2*(coordinates(i, j, k, IAXIS))**2+ &
+                                       heater%C1*(coordinates(i, j, k, IAXIS))+ &
+                                       heater%C0)- &
+                                    regionData(i, j, k, ivar)
+                              else
+
+                                 regionData(offset-i, j, k, ivar) = 2*heater%wallTemp- &
+                                                                    regionData(i, j, k, ivar)
+                              end if
+
+                           end if
+                        end if
+
+                     end if
+
+                  end do
+               end do
+            end do
+         end do
+#ifdef MULTIPHASE_EVAPORATION
+      else if (ivar == DFUN_VAR) then
+         do k = 1, ke
+            do j = 1, je
+               do i = 1, guard
+                  do htr = 1, htr_numHeaters
+
+                     heater => htr_heaterInfo(htr)
+
+                     if (coordinates(i, j, k, IAXIS) .gt. heater%xMin .and. &
+                         coordinates(i, j, k, IAXIS) .lt. heater%xMax &
+#if NDIM==MDIM
+                         .and. &
+                         coordinates(i, j, k, KAXIS) .gt. heater%zMin .and. &
+                         coordinates(i, j, k, KAXIS) .lt. heater%zMax &
+#endif
+                         ) then
+
+                        if (abs(0.5*(heater%yMax+heater%yMin)-htr_yMin) .gt. &
+                            abs(0.5*(heater%yMax+heater%yMin)-htr_yMax)) then
+
+                           dynamicAngle = heater%rcdAngle
+
+                           veli = regionData(guard, j, k, VELX_VAR)*regionData(guard, j, k, NRMX_VAR)
+#if NDIM == MDIM
+                           veli = veli+regionData(guard, j, k, VELZ_VAR)*regionData(guard, j, k, NRMZ_VAR)
+#endif
+                           if (veli .ge. 0.0) then
+                              if (abs(veli) .le. heater%velContact) then
+                                 dynamicAngle = ((heater%advAngle-heater%rcdAngle)/(2*heater%velContact))*abs(veli)+ &
+                                                (heater%advAngle+heater%rcdAngle)/2.0d0
+                              else
+                                 dynamicAngle = heater%advAngle
+                              end if
+                           end if
+
+                           regionData(offset-i, j, k, ivar) = regionData(i, j, k, ivar)- &
+                                                              del(axis)*cos(dynamicAngle*acos(-1.0)/180)
+
+                           !regionData(offset - i, j, k, ivar) = regionData(i, j, k, ivar)- &
+                           !                    del(axis)*(offset - 2*i)*cos(dynamicAngle*acos(-1.0)/180)
+
+                        end if
+
+                     end if
+
+                  end do
+               end do
+            end do
+         end do
+#endif
+
+      end if
+
+   else
+      if (ivar == TEMP_VAR) then
+         do k = 1, ke
+            do j = 1, je
+               do i = 1, guard
+                  do htr = 1, htr_numHeaters
+
+                     heater => htr_heaterInfo(htr)
+
+                     if (coordinates(i, j, k, IAXIS) .gt. heater%xMin .and. &
+                         coordinates(i, j, k, IAXIS) .lt. heater%xMax &
+#if NDIM==MDIM
+                         .and. &
+                         coordinates(i, j, k, KAXIS) .gt. heater%zMin .and. &
+                         coordinates(i, j, k, KAXIS) .lt. heater%zMax &
+#endif
+                         ) then
+
+                        if (abs(0.5*(heater%yMax+heater%yMin)-htr_yMin) .lt. &
+                            abs(0.5*(heater%yMax+heater%yMin)-htr_yMax)) then
+
+                           if (heater%heatFluxFlg) then
+
+                              wallDfun = 0.5*(regionData(guard, j, k, DFUN_VAR)+ &
+                                              regionData(guard+1, j, k, DFUN_VAR))
+                              !write(*,*) regionData(guard+1,j,k,DFUN_VAR)
+                              !write(*,*) wallDfun
+
+                              !write(*,*) heater%heatFlux
+                              !write(*,*) del(axis)
+                              !write(*,*) thcoBC
+
+                              if (wallDfun .le. 0) then
+                                 thcoBC = 1.0
+                              else
+                                 thcoBC = thcoGas
+                              end if
+
+                              regionData(i, j, k, ivar) = &
+                                 ((heater%heatFlux)*del(axis))*(offset-2*i)/(thcoBC)+ &
+                                 regionData(offset-i, j, k, ivar)
+
+                              !regionData(guard+1-i, j, k, ivar) = &
+                              !                        ((heater%heatFlux)*del(axis))/(thcoBC) +&
+                              !                        regionData(guard+2 - i, j, k, ivar)
+
+                              !regionData(guard+1-i, j, k, ivar) = &
+                              !                        0.33*(((heater%heatFlux)*4*del(axis))/(thcoBC) +&
+                              !                        regionData(guard+2-i, j, k, ivar) +&
+                              !                        3*regionData(guard+3-i, j, k, ivar)-&
+                              !                        regionData(guard+4-i, j, k, ivar))
+
+                           else
+
+                              if (heater%varTempFlg) then
+
+                                 regionData(i, j, k, ivar) = &
+                                    2*(heater%C3*(coordinates(i, j, k, IAXIS))**3+ &
+                                       heater%C2*(coordinates(i, j, k, IAXIS))**2+ &
+                                       heater%C1*(coordinates(i, j, k, IAXIS))+ &
+                                       heater%C0)- &
+                                    regionData(offset-i, j, k, ivar)
+                              else
+
+                                 regionData(i, j, k, ivar) = 2*heater%wallTemp- &
+                                                             regionData(offset-i, j, k, ivar)
+                              end if
+
+                           end if
+                        end if
+
+                     end if
+
+                  end do
+               end do
+            end do
+         end do
+
+#ifdef MULTIPHASE_EVAPORATION
+      else if (ivar == DFUN_VAR) then
+         do k = 1, ke
+            do j = 1, je
+               do i = 1, guard
+                  do htr = 1, htr_numHeaters
+
+                     heater => htr_heaterInfo(htr)
+
+                     if (coordinates(i, j, k, IAXIS) .gt. heater%xMin .and. &
+                         coordinates(i, j, k, IAXIS) .lt. heater%xMax &
+#if NDIM==MDIM
+                         .and. &
+                         coordinates(i, j, k, KAXIS) .gt. heater%zMin .and. &
+                         coordinates(i, j, k, KAXIS) .lt. heater%zMax &
+#endif
+                         ) then
+
+                        if (abs(0.5*(heater%yMax+heater%yMin)-htr_yMin) .lt. &
+                            abs(0.5*(heater%yMax+heater%yMin)-htr_yMax)) then
+
+                           dynamicAngle = heater%rcdAngle
+
+                           veli = regionData(guard+1, j, k, VELX_VAR)*regionData(guard+1, j, k, NRMX_VAR)
+#if NDIM == MDIM
+                           veli = veli+regionData(guard+1, j, k, VELZ_VAR)*regionData(guard+1, j, k, NRMZ_VAR)
+#endif
+                           if (veli .ge. 0.0) then
+                              if (abs(veli) .le. heater%velContact) then
+                                 dynamicAngle = ((heater%advAngle-heater%rcdAngle)/(2*heater%velContact))*abs(veli)+ &
+                                                (heater%advAngle+heater%rcdAngle)/2.0d0
+                              else
+                                 dynamicAngle = heater%advAngle
+                              end if
+                           end if
+
+                           regionData(i, j, k, ivar) = regionData(offset-i, j, k, ivar)- &
+                                                       del(axis)*cos(dynamicAngle*acos(-1.0)/180)
+                           !   regionData(i, j, k, ivar) = regionData(offset-i, j, k, ivar)- &
+                           !                         del(axis)*(offset-2*i)*cos(dynamicAngle*acos(-1.0)/180)
+
+                        end if
+                     end if
+
+                  end do
+               end do
+            end do
+         end do
+#endif
+
+      end if
+
+   end if
+end subroutine Heater_applyBCToRegion

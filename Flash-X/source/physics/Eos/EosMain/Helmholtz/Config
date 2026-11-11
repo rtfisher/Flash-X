@@ -1,8 +1,14 @@
 #  Configuration file for helmholtz eos
 #  [physics/Eos/EosMain/Helmholtz]
-DEFAULT SpeciesBased 
 
-EXCLUSIVE SpeciesBased Ye ExternalAbarZbar
+REQUESTS Multispecies/MultispeciesMain
+
+D eos_singleSpeciesA  Single-species nucleon number for the gas 
+D &         (only used by Eos/Helmholtz when compiled w/o Multispecies)
+PARAMETER eos_singleSpeciesA         REAL    1.00  [0.0 to ]
+D eos_singleSpeciesZ  Single-species proton number for the gas  
+D &         (only used Eos/Helmholtz when compiled w/o Multispecies)
+PARAMETER eos_singleSpeciesZ         REAL    1.00  [0.0 to ]
 
 D   eos_coulombMult coulomb correction multiplier
 PARAMETER eos_coulombMult  REAL    1.0
@@ -33,7 +39,25 @@ D &              This should be a small density for enery conservation reasons.
 D & Only used in the Helmholtz/ExternalAbarZbar implementation of Eos.
 PARAMETER eos_fluffDens REAL 0.0
 
+PARAMETER eos_useMultiSpecies BOOLEAN true
+
 VARIABLE gamc  EOSMAPINOUT: GAMC   # sound-speed gamma
 VARIABLE game  EOSMAPOUT:   GAME   # energy gamma
 
 DATAFILES helm_table.dat
+
+# Since we cannot use EXCLUSIVE to limit only one EOS implementation
+# since Hybrid needs multiple ones, the following PPDEFINE will
+# be used in the non-hybrid Eos.F90 to perform a compile time check
+# that only this implementation has been loaded if the Hybrid EOS has not
+PPDEFINE EOS_HELMHOLTZ_INCLUDED
+
+VARIANTS Null
+
+USESETUPVARS Milhoja
+IF Milhoja
+  VARIANT_MACRODEF_PARENTDIRS physics/Eos/EosMain
+  REQUIRES physics/Eos/EosMain/Helmholtz/GPU_interface
+  VARIANTS GPU
+ENDIF
+

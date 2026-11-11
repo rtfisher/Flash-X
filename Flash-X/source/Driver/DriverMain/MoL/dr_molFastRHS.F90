@@ -1,6 +1,6 @@
 !!****if* source/Driver/DriverMain/MoL/dr_molFastRHS
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2023 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 !!
 !!  SYNOPSIS
 !!
-!!      call dr_molFastRHS(real, intent(in) :: t)
+!!      call dr_molFastRHS(real,    intent(in) :: t,
+!!                         integer, intent(in) :: activeRHS,
+!!                         real,    intent(in) :: dtWeight)
 !!
 !!  DESCRIPTION
 !!
@@ -26,11 +28,12 @@
 !!
 !!  ARGUMENTS
 !!
-!!      t : Current time
+!!      t          : Current time
+!!      activeRHS : The RHS data struct to fill
+!!      dtWeight  : Weighted timestep for the current stage (e.g. for flux corrections)
 !!
 !!***
-subroutine dr_molFastRHS(t)
-   ! use Spacetime_interface,  only: Spacetime_molFastRHS
+subroutine dr_molFastRHS(t, activeRHS, dtWeight)
    use Hydro_interface, only: Hydro_molFastRHS
    use RadTrans_interface, only: RadTrans_molFastRHS
    use Simulation_interface, only: Simulation_molFastRHS
@@ -38,9 +41,10 @@ subroutine dr_molFastRHS(t)
    implicit none
 
    real, intent(in) :: t
+   integer, intent(in) :: activeRHS
+   real, intent(in) :: dtWeight
 
-   ! call Spacetime_molFastRHS(t)
-   call Hydro_molFastRHS(t)
-   call RadTrans_molFastRHS(t)
-   call Simulation_molFastRHS(t)
+   call Hydro_molFastRHS(t, activeRHS, dtWeight)
+   call RadTrans_molFastRHS(t, activeRHS, dtWeight)
+   call Simulation_molFastRHS(t, activeRHS, dtWeight)
 end subroutine dr_molFastRHS

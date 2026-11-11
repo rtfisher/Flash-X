@@ -25,7 +25,7 @@ subroutine Simulation_initBlock(solnData, tileDesc)
   use Driver_interface, ONLY : Driver_abort
   use Grid_interface, ONLY : Grid_getCellCoords, Grid_getGeometry, &
      Grid_renormAbundance
-  use Eos_interface, ONLY : Eos_wrapped, Eos_getAbarZbar
+  use Eos_interface, ONLY : Eos_multiDim, Eos_getAbarZbar
   use Grid_tile, ONLY : Grid_tile_t
   use Multispecies_interface, ONLY : Multispecies_getSumFrac
   use PhysicalConstants_interface, ONLY : PhysicalConstants_get
@@ -47,8 +47,9 @@ subroutine Simulation_initBlock(solnData, tileDesc)
   integer :: meshGeom
 
   real, allocatable, dimension(:) :: xinitial
-  real :: radCenter, thtCenter, radCenterVol, dVol, ign_dist, dx, dy, dz, dr
+  real :: radCenter, thtCenter, phiCenter, radCenterVol, dVol, ign_dist, dx, dy, dz, dr
   real :: radMin, radMax, x2Min, x2Max, y2Min, y2Max, z2Min, z2Max
+  real :: m, b, match_center
   real :: velx, vely, velz, dens, temp, pres, eint, xsum, xmissing, sumY, Ye
   real :: enuc0, enuc, avo, c_light, q_e, conv
   integer :: i, j, k, n, nunk, lev
@@ -119,6 +120,7 @@ subroutine Simulation_initBlock(solnData, tileDesc)
            if ( meshGeom == SPHERICAL ) then
               radCenter = xCenter(i)
               thtCenter = yCenter(j)
+              phiCenter = zCenter(k)
               dVol = (4.0*PI/3.0)*(xRight(i)-xLeft(i))*(3.0*xLeft(i)*xRight(i) + (xRight(i)-xLeft(i))**2)
               radCenterVol = (4.0*PI/3.0)*xLeft(i)**3 + 0.5*dVol
 
@@ -134,6 +136,7 @@ subroutine Simulation_initBlock(solnData, tileDesc)
               if ( thtCenter < 0.0 ) then
                  thtCenter = thtCenter + PI
               end if
+              phiCenter = zCenter(k)
               radCenterVol = (4.0*PI/3.0) * radCenter**3
 
               x2Min = xLeft(i)**2
@@ -151,6 +154,7 @@ subroutine Simulation_initBlock(solnData, tileDesc)
            else if ( meshGeom == CARTESIAN ) then
               radCenter = sqrt(xCenter(i)**2 + yCenter(j)**2 + zCenter(k)**2)
               thtCenter = acos( zCenter(k) / radCenter )
+              phiCenter = mod( atan2( yCenter(j), xCenter(i) ), 2.0*PI )
               radCenterVol = (4.0*PI/3.0) * radCenter**3
 
               if ( xLeft(i)*xRight(i) > 0.0 ) then
@@ -193,38 +197,6 @@ subroutine Simulation_initBlock(solnData, tileDesc)
            call Multispecies_getSumFrac(EB, enuc0, &
                 solnData(SPECIES_BEGIN:SPECIES_END,i,j,k))
 
-           if(sim_useShell) then
-             ! add a shell/belt
-              if ( radCenter >= sim_radShellMin .and. radCenter <= sim_radShellMax .and. &
-                 & thtCenter >= sim_thtShellMin .and. thtCenter <= sim_thtShellMax ) then
-                 solnData(SPECIES_BEGIN:SPECIES_END,i,j,k) = sim_smallx
-#ifdef HE4_SPEC
-                 solnData(HE4_SPEC,i,j,k) = sim_xhe4Shell
-#endif
-#ifdef C12_SPEC
-                 solnData(C12_SPEC,i,j,k) = sim_xc12Shell
-#endif
-#ifdef NI56_SPEC
-                 solnData(NI56_SPEC,i,j,k) = sim_xni56Shell
-#endif
-#ifdef O16_SPEC
-                 solnData(O16_SPEC,i,j,k) = 1.0-sim_xhe4Shell-sim_xc12Shell-sim_xni56Shell
-#endif
-
-                 if ( dens > sim_densFluff ) then
-                    dens = sim_densShellMult*dens
-                    temp = sim_tempShellMult*temp
-                 else
-                    if ( sim_densShell > 0.0 ) then
-                       dens = sim_densShell
-                    end if
-                    if ( sim_tempShell > 0.0 ) then
-                       temp = sim_tempShell
-                    end if
-                 end if
-
-              end if
-           end if
 
            if (sim_ignite) then
               !-----------------------------------------------
@@ -237,27 +209,26 @@ subroutine Simulation_initBlock(solnData, tileDesc)
               if ( NDIM == 3 ) ign_dist = ign_dist + (zCenter(k) - sim_ignZ)**2
               ign_dist = sqrt(ign_dist)
 
+              ! build a plume by skipping any cell with radius larger than the center
+              ! of the match
+              if (sim_plume) then
+                  if (radCenter > match_center) then
+                      ign_dist = -dx
+                  endif
+              endif
+
               ! heat to ignition temp and set a parameterized composition
               ! if zone center is within half zone-width of match
-              !
-              ! NOTE: the matchhead composition comes from xc12_match/xo16_match
-              ! and is INDEPENDENT of the star, whose composition is read from
-              ! the initialWDFile profile.  That is deliberate -- physically the
-              ! trigger is a converging shock from a helium-shell detonation, so
-              ! its composition is a modelling choice, not something inherited
-              ! from the core -- and it is harmless for the stock problem, where
-              ! the star is 50/50 C/O and the defaults agree with it.
-              !
-              ! It stops being harmless the moment the star's composition is
-              ! varied.  Leaving the match at 0.5/0.5 inside, say, a 20% carbon
-              ! star seeds the ignition region with more fuel than its
-              ! surroundings, which biases the run toward igniting and quietly
-              ! breaks any claim that composition was the only variable changed.
-              ! For a C/O study, set xc12_match and xo16_match in flash.par to
-              ! the same fractions as the progenitor.  (LAUNCH 2026 does this
-              ! for the three groups that vary carbon fraction.)
               if ( ign_dist <= sim_ignROuter + 0.5*dx .and. ign_dist >= sim_ignRInner - 0.5*dx ) then
-                 temp = sim_ignTOuter
+
+                 if ( ign_dist > sim_ignROuter ) then
+                     temp = sim_ignTOuter
+                 else
+                     m = (sim_ignTInner - sim_ignTOuter)/(sim_ignRInner - sim_ignROuter)
+                     b = (sim_ignTOuter*sim_ignRInner - sim_ignTInner*sim_ignROuter)/(sim_ignRInner-sim_ignROuter)
+                     temp = m*ign_dist + b
+                 endif
+
                  solnData(SPECIES_BEGIN:SPECIES_END,i,j,k) = sim_smallx
 #ifdef C12_SPEC
                  solnData(C12_SPEC,i,j,k) = sim_xc12Match
@@ -277,6 +248,42 @@ subroutine Simulation_initBlock(solnData, tileDesc)
               end if
 
            end if ! sim_ignite
+
+
+           if (sim_useShell) then
+             ! add a shell/belt
+              if ( radCenter >= sim_radShellMin .and. radCenter <= sim_radShellMax .and. &
+                 & thtCenter >= sim_thtShellMin .and. thtCenter <= sim_thtShellMax .and. &
+                 & phiCenter >= sim_phiShellMin .and. phiCenter <= sim_phiShellMax ) then
+                 solnData(SPECIES_BEGIN:SPECIES_END,i,j,k) = sim_smallx
+#ifdef HE4_SPEC
+                 solnData(HE4_SPEC,i,j,k) = sim_xhe4Shell
+#endif
+#ifdef C12_SPEC
+                 solnData(C12_SPEC,i,j,k) = sim_xc12Shell
+#endif
+#ifdef NI56_SPEC
+                 solnData(NI56_SPEC,i,j,k) = sim_xni56Shell
+#endif
+#ifdef O16_SPEC
+                 solnData(O16_SPEC,i,j,k) = 1.0-sim_xhe4Shell-sim_xc12Shell-sim_xni56Shell
+#endif
+
+                 temp = sim_tempShell
+                 if ( dens > sim_densFluff ) then
+                    dens = sim_densShellMult*dens
+                    temp = sim_tempShellMult*temp
+                 else
+                    if ( sim_densShell > 0.0 ) then
+                       dens = sim_densShell
+                    end if
+                    if ( sim_tempShell > 0.0 ) then
+                       temp = sim_tempShell
+                    end if
+                 end if
+
+              end if
+           end if ! sim_useShell
 
            ! Giant traffic cone
            if ( dens < sim_smallrho .or. temp < sim_smallt ) then
@@ -305,18 +312,25 @@ subroutine Simulation_initBlock(solnData, tileDesc)
            solnData(DENS_VAR,i,j,k) = dens
            solnData(TEMP_VAR,i,j,k) = temp
 
-           solnVec(1:NUNK_VARS) => solnData(1:NUNK_VARS,i,j,k)
-           call Eos_getAbarZbar(solnVec=solnVec,sumY=sumY,Ye=Ye)
-           solnData(SUMY_MSCALAR,i,j,k) = sumY
-           solnData(YE_MSCALAR,i,j,k) = Ye
-
         end do
      end do
   end do
 
+  ! renormalize BEFORE calculating any sumY
   call Grid_renormAbundance(tileDesc,tileLimits,solnData)
 
-  call Eos_wrapped(MODE_DENS_TEMP,tileLimits,solnData)
+  do k = tileLimits(LOW,KAXIS), tileLimits(HIGH,KAXIS)
+     do j = tileLimits(LOW,JAXIS), tileLimits(HIGH,JAXIS)
+        do i = tileLimits(LOW,IAXIS), tileLimits(HIGH,IAXIS)
+           solnVec(1:NUNK_VARS) => solnData(1:NUNK_VARS,i,j,k)
+           call Eos_getAbarZbar(solnVec=solnVec,sumY=sumY,Ye=Ye)
+           solnData(SUMY_MSCALAR,i,j,k) = sumY
+           solnData(YE_MSCALAR,i,j,k) = Ye
+        end do
+     end do
+  end do
+
+  call Eos_multiDim(MODE_DENS_TEMP,tileLimits,tileDesc%blkLimitsGC(LOW,:),solnData)
 
   ! Giant traffic cone
   do k = tileLimits(LOW,KAXIS), tileLimits(HIGH,KAXIS)

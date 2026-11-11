@@ -19,10 +19,10 @@
 !! SYNOPSIS
 !!
 !!  ImBound_finalize()
-!!  
+!!
 !!
 !! DESCRIPTION
-!! 
+!!
 !!  Finalize unit scope variables which are typically the runtime parameters.
 !!  This must be called once by Driver_finalizeAll.F90 first. Calling multiple
 !!  times will not cause any harm but is unnecessary.
@@ -31,7 +31,18 @@
 
 subroutine ImBound_finalize()
 
-  implicit none
+   use ImBound_data, ONLY: ib_bodyInfo, ib_annIdx, ib_numBodies
+   use ib_interface, ONLY: ib_annDestroyTree
+
+   implicit none
+   integer :: ibd
+
+   do ibd = 1, ib_numBodies
+      call ib_annDestroyTree(ib_bodyInfo(ibd))
+   end do
+
+   deallocate (ib_bodyInfo)
+   deallocate (ib_annIdx)
 
 end subroutine ImBound_finalize
 

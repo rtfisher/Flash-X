@@ -1,0 +1,23 @@
+# YAML file for PoolBoiling tests
+# comments can be added with "#"
+
+UnitTest/incompFlow/ChanneFlow/2d/Periodic:
+  setupOptions: -auto -maxblocks=100 +amrex +parallelIO -2d -nxb=16 -nyb=16 +incomp
+  parfiles: test_periodic_bc.par
+
+Comparison/incompFlow/ChanneFlow/AMReX/2d:
+  setupOptions: -auto -maxblocks=100 +amrex +parallelIO -2d -nxb=16 -nyb=16 +incomp
+  parfiles: test_periodic_bc.par
+
+Comparison/incompFlow/ChanneFlow/Paramesh/2d:
+  setupOptions: -auto -maxblocks=100 +pmvdev --index-reorder -gridinterpolation=native 
+                +parallelIO -2d -nxb=16 -nyb=16 +incomp
+  parfiles: test_outflow_bc.par
+
+Comparison/incompFlow/ChannelFlow/AMRGrid/2d:
+  setupOptions: -auto -maxblocks=1000 -2d -nxb=8 -nyb=8 +incomp InsForceInOut=False +nolwf +amrex +serialIO
+  parfiles: test_amr_2d.par
+
+Comparison/incompFlow/ChanneFlow/AMReX/3d:
+  setupOptions: -auto -maxblocks=100 +amrex +parallelIO -3d -nxb=16 -nyb=16 -nzb=16 +incomp
+  parfiles: test_outflow_bc_3d.par

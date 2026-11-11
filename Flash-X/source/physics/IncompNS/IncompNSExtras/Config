@@ -1,9 +1,16 @@
-#
 REQUIRES physics/IncompNS/IncompNSMain
 REQUIRES physics/IncompNS/localAPI
 
-#-----------------------------------------------------------------------
-VARIABLE velx                   # velocity in x direction
-VARIABLE vely            	# velocity in y direction
-VARIABLE velz                   # velocity in z direction
-VARIABLE omgm                   # Vorticity module
+PPDEFINE INCOMPNS_EXTRAS
+
+D velx_variable Velocity in x direction
+VARIABLE velx
+
+D vely_variable Velocity in y direction
+VARIABLE vely
+
+D velz_variable Velocity in z direction
+VARIABLE velz
+
+D omgm_variable Vorticity
+VARIABLE omgm

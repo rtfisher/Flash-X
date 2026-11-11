@@ -41,17 +41,12 @@ subroutine Simulation_init()
    use Simulation_data, ONLY: sim_xMin, sim_yMin, &
                               sim_xMax, sim_yMax, &
                               sim_zMin, sim_zMax, &
+                              sim_xMinRef, sim_xMaxRef, &
+                              sim_yMinRef, sim_yMaxRef, &
+                              sim_zMinRef, sim_zMaxRef, &
                               sim_meshMe
 
    use RuntimeParameters_interface, ONLY: RuntimeParameters_get
-
-#ifdef SIMULATION_FORCE_INLET
-   use sim_outletInterface, ONLY: sim_outletInit
-#endif
-
-#ifdef SIMULATION_FORCE_OUTLET
-   use sim_inletInterface, ONLY: sim_inletInit
-#endif
 
    implicit none
 
@@ -64,12 +59,11 @@ subroutine Simulation_init()
    call RuntimeParameters_get('zmin', sim_zMin)
    call RuntimeParameters_get('zmax', sim_zMax)
 
-#ifdef SIMULATION_FORCE_INLET
-   call sim_inletInit()
-#endif
-
-#ifdef SIMULATION_FORCE_OUTLET
-   call sim_outletInit()
-#endif
+   call RuntimeParameters_get('sim_xMinRef', sim_xMinRef)
+   call RuntimeParameters_get('sim_yMinRef', sim_yMinRef)
+   call RuntimeParameters_get('sim_xMaxRef', sim_xMaxRef)
+   call RuntimeParameters_get('sim_yMaxRef', sim_yMaxRef)
+   call RuntimeParameters_get('sim_zMinRef', sim_zMinRef)
+   call RuntimeParameters_get('sim_zMaxRef', sim_zMaxRef)
 
 end subroutine Simulation_init

@@ -1,6 +1,6 @@
 !!****cr* source/physics/RadTrans/RadTrans_interface
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2023 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -165,6 +165,42 @@ module RadTrans_interface
 !!$     end subroutine RadTrans_mgdSetBc
 !!$  end interface
 
+  interface RadTrans_prolongDgData
+     subroutine RadTrans_prolongDgData_simple(inData,outData,skip,lmask)
+       implicit none
+       real,intent(IN)    :: inData(:,:,:,:)
+       real,intent(INOUT) :: outData(:,:,:,:)
+       integer,intent(IN) :: skip(MDIM)
+       logical,intent(IN) :: lmask(:)
+     end subroutine RadTrans_prolongDgData_simple
+     subroutine RadTrans_prolongDgData(inData,outData,skip,lmask,xface,yface,zface)
+       implicit none
+       real,intent(IN)    :: inData(:,:,:,:)
+       real,intent(INOUT) :: outData(:,:,:,:)
+       integer,intent(IN) :: skip(MDIM)
+       logical,intent(IN) :: lmask(:)
+       real,intent(IN)    :: xface(:)
+       real,intent(IN),OPTIONAL :: yface(:), zface(:)
+     end subroutine RadTrans_prolongDgData
+  end interface
+
+  interface RadTrans_restrictDgData
+     subroutine RadTrans_restrictDgData_simple(inData,outData,lmask)
+       implicit none
+       real,intent(IN)    :: inData(:,:,:,:)
+       real,intent(INOUT) :: outData(:,:,:,:)
+       logical,intent(IN) :: lmask(:)
+     end subroutine RadTrans_restrictDgData_simple
+     subroutine RadTrans_restrictDgData(inData,outData,lmask,xface,yface,zface)
+       implicit none
+       real,intent(IN)    :: inData(:,:,:,:)
+       real,intent(INOUT) :: outData(:,:,:,:)
+       logical,intent(IN) :: lmask(:)
+       real,intent(IN)    :: xface(:)
+       real,intent(IN),OPTIONAL :: yface(:), zface(:)
+     end subroutine RadTrans_restrictDgData
+  end interface
+
    interface
       subroutine RadTrans_finalize()
          implicit none
@@ -174,23 +210,29 @@ module RadTrans_interface
    !! MoL-specific functionality
 
    interface
-      subroutine RadTrans_molExplicitRHS(t)
+      subroutine RadTrans_molExplicitRHS(t, activeRHS, dtWeight)
          implicit none
          real, intent(in) :: t
+         integer, intent(in) :: activeRHS
+         real, intent(in) :: dtWeight
       end subroutine RadTrans_molExplicitRHS
    end interface
 
    interface
-      subroutine RadTrans_molImplicitRHS(t)
+      subroutine RadTrans_molImplicitRHS(t, activeRHS, dtWeight)
          implicit none
          real, intent(in) :: t
+         integer, intent(in) :: activeRHS
+         real, intent(in) :: dtWeight
       end subroutine RadTrans_molImplicitRHS
    end interface
 
    interface
-      subroutine RadTrans_molFastRHS(t)
+      subroutine RadTrans_molFastRHS(t, activeRHS, dtWeight)
          implicit none
          real, intent(in) :: t
+         integer, intent(in) :: activeRHS
+         real, intent(in) :: dtWeight
       end subroutine RadTrans_molFastRHS
    end interface
 

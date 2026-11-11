@@ -58,13 +58,15 @@ module Multiphase_data
    real, save :: mph_gama
 
    integer, save :: mph_iVelFVar, mph_iMuCVar, mph_iRhoFVar, &
-                    mph_iJumpVar, mph_iAlphaCVar
+                    mph_iJumpVar, mph_iAlphaCVar, mph_iRhoCVar
 
-   integer, save :: mph_iTempVar, mph_iGfmVar, mph_iMdotVar, &
+   integer, save :: mph_iTempVar, mph_iTempFrcVar, mph_iMdotVar, &
                     mph_iDivCVar
 
    real, save :: mph_Stefan, mph_invReynolds, mph_Prandtl
 
-   real, save :: mph_iPropSmear
+   real, save :: mph_iPropSmear, mph_presTol, mph_tempTol
+
+   real, save :: mph_scalarGradX, mph_scalarGradY, mph_scalarGradZ
 
 end module Multiphase_data

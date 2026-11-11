@@ -17,7 +17,7 @@ Grid += Grid_init.o \
 	Grid_getDomainBoundBox.o \
 	Grid_updateRefinement.o \
 	Grid_getDeltas.o \
-	Grid_getCellCoords.o \
+	Grid_getCellCoords.o Grid_getCellCoords_1drange.o \
 	Grid_getCellFaceAreas.o \
 	Grid_getCellVolumes.o \
 	Grid_getBlkIndexLimits.o Grid_getBlkCornerID.o \
@@ -40,7 +40,9 @@ Grid += Grid_init.o \
 	Grid_countParticlesByBlock.o \
 	Grid_getGeometry.o Grid_sortParticles.o Grid_countParticles.o \
 	Grid_mapMeshToParticles.o Grid_mapMeshToParticles_pc.o Grid_mapParticlesToMesh.o \
-	Grid_solvePoisson.o Grid_conserveField.o Grid_interface.o \
+	Grid_solvePoisson.o Grid_beginPoisson.o Grid_finalizePoisson.o \
+	Grid_solveLaplacian.o \
+	Grid_conserveField.o Grid_interface.o \
         Grid_ptDataTypes.o \
         Grid_bcApplyToRegion.o\
 	Grid_bcApplyToRegionSpecialized.o\
@@ -61,14 +63,13 @@ Grid += Grid_init.o \
 	Grid_receiveInputData.o \
 	Grid_getNeighProcList.o \
 	Grid_getBlkNeighLevels.o \
-	Grid_makeVector.o \
 	Grid_zeroFluxData.o \
 	Grid_addFineToFluxRegister.o \
 	Grid_addFineToFluxRegister_block.o \
 	Grid_addCoarseToFluxRegister.o \
 	Grid_setWork.o \
 	Grid_setWorkBounds.o \
-	Grid_setWorkDefault.o
+	Grid_setWorkDefault.o Grid_getMaxcells.o
 
 Grid += Grid_init.o Grid_coordTransfm.o
 

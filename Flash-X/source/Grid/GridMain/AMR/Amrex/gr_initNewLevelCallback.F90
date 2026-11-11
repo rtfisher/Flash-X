@@ -70,7 +70,7 @@ subroutine gr_initNewLevelCallback(lev, time, pba, pdm) bind(c)
 
     use gr_physicalMultifabs,      ONLY : unk, &
                                           gr_scratchCtr, &
-                                          facevarx, facevary, facevarz, &
+                                          facevars, &
                                           fluxes, &
                                           flux_registers
     use gr_amrexInterface,         ONLY : gr_clearLevelCallback, &
@@ -87,7 +87,7 @@ subroutine gr_initNewLevelCallback(lev, time, pba, pdm) bind(c)
                                           gr_interpolator, &
                                           lo_bc_amrex, hi_bc_amrex, &
                                           gr_meshMe
-    use Eos_interface,             ONLY : Eos_wrapped
+    use Eos_interface,             ONLY : Eos_multiDim
     use Logfile_interface,         ONLY : Logfile_stamp
     use Timers_interface,          ONLY : Timers_start, Timers_stop
     use Particles_interface, ONLY :  Particles_createDataStructs
@@ -129,16 +129,16 @@ subroutine gr_initNewLevelCallback(lev, time, pba, pdm) bind(c)
     ! Face variables
     nodal(:)     = .FALSE.
     nodal(IAXIS) = .TRUE.
-    call amrex_multifab_build(facevarx(lev), ba, dm, NFACE_VARS, NGUARD, nodal)
+    call amrex_multifab_build(facevars(IAXIS, lev), ba, dm, NFACE_VARS, NGUARD, nodal)
 #if NDIM >= 2
     nodal(:)     = .FALSE.
     nodal(JAXIS) = .TRUE.
-    call amrex_multifab_build(facevary(lev), ba, dm, NFACE_VARS, NGUARD, nodal)
+    call amrex_multifab_build(facevars(JAXIS, lev), ba, dm, NFACE_VARS, NGUARD, nodal)
 #endif
 #if NDIM == 3
     nodal(:)     = .FALSE.
     nodal(KAXIS) = .TRUE.
-    call amrex_multifab_build(facevarz(lev), ba, dm, NFACE_VARS, NGUARD, nodal)
+    call amrex_multifab_build(facevars(KAXIS, lev), ba, dm, NFACE_VARS, NGUARD, nodal)
 #endif
 #endif
 
@@ -291,7 +291,7 @@ subroutine gr_initNewLevelCallback(lev, time, pba, pdm) bind(c)
        call itor%currentTile(tileDesc)
 
        call tileDesc%getDataPtr(initData, CENTER)
-       call Eos_wrapped(gr_eosModeInit, tileDesc%grownLimits, initData)
+       call Eos_multiDim(gr_eosModeInit, tileDesc%grownLimits,tileDesc%blkLimitsGC(LOW,:), initData)
        call tileDesc%releaseDataPtr(initData, CENTER)
 
        call itor%next()

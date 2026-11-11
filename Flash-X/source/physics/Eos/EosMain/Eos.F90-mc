@@ -1,0 +1,109 @@
+!> @copyright Copyright 2023 UChicago Argonne, LLC and contributors
+!!
+!! @licenseblock
+!!   Licensed under the Apache License, Version 2.0 (the "License");
+!!   you may not use this file except in compliance with the License.
+!!
+!!   Unless required by applicable law or agreed to in writing, software
+!!   distributed under the License is distributed on an "AS IS" BASIS,
+!!   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!!   See the License for the specific language governing permissions and
+!!   limitations under the License.
+!! @endlicenseblock
+!!
+!! @file
+!> @ingroup physics_Eos
+!!
+!! @brief Main implementation of the API call for a single cell computation
+!! of the equation of state
+!! 
+!! @subref{Eos}
+!!
+!!
+!!
+
+!!VARIANTS(GPU): Eos, &
+!!               eos_idealGamma, &
+!!               eos_helmSpecies, &
+!!               eos_weakLib, &
+!!               Driver_abort
+
+#include "constants.h"
+#include "Eos.h"
+#include "Simulation.h"
+
+
+subroutine Eos(mode, @M eos_args, massFrac, derivs)
+
+!==============================================================================
+  use Driver_interface, ONLY : Driver_abort
+  use Eos_data, ONLY : eos_meshMe, eos_type
+  use eos_localInterface, ONLY : eos_idealGamma, eos_helmSpecies, eos_weakLib
+
+  implicit none
+  integer, INTENT(in) :: mode
+  real, INTENT(INOUT) :: @M eos_args
+  real, optional, INTENT(out),dimension(EOS_VARS+1:EOS_NUM) :: derivs
+  real, optional, INTENT(in),dimension(NSPECIES)    :: massFrac
+  logical :: pMassFrac_and_derivs, pMassFrac, pDerivs
+
+  !! in there just in case weaklib is included ignored for other versions
+  real, dimension(1,EOS_VARS) :: eosData 
+  integer :: i=1, vecLen = 1
+  real :: ekin  
+  if (mode==MODE_EOS_NOP) return ! * Return immediately for MODE_EOS_NOP! *
+
+  pMassFrac = present(massFrac)
+  pDerivs = present(derivs)
+  pMassFrac_and_derivs = pMassFrac.and.pDerivs
+
+  if(pMassFrac_and_derivs) then
+     @M eos_idealGamma_massFrac_derivs
+     @M eos_helmSpecies_massFrac_derivs
+     @M eos_weakLib_point_massFrac_derivs
+  else if (pMassFrac) then
+     @M eos_idealGamma_massFrac
+     @M eos_helmSpecies_massFrac
+     @M eos_weakLib_point_massFrac
+  else if (pDerivs) then
+     @M eos_idealGamma_derivs
+     @M eos_helmSpecies_derivs
+     @M eos_weakLib_point_derivs
+  else
+     @M eos_idealGamma
+     @M eos_helmSpecies
+     @M eos_weakLib_point
+  end if
+
+  return
+end subroutine Eos
+
+
+! Ugly hack to prevent this version of Eos.F90 from compiling if
+! two or more EOS implementations are included.  The check against the
+! hybrid EOS below should never return true as it has its own implementation
+! of Eos.F90.
+! Note: only considering "top-level" implementations, e.g. only checking
+! if Helmholtz is included but not SpeciesBased, Ye, etc.
+
+#if defined(EOS_GAMMA_INCLUDED) && !defined(EOS_HYBRID_INCLUDED)
+# if  defined(EOS_WEAKLIB_INCLUDED)           || \
+      defined(EOS_HELMHOLTZ_INCLUDED)
+#   error Multiple EOS implementations included with Gamma without Hybrid
+# endif
+#endif
+
+
+#if defined(EOS_WEAKLIB_INCLUDED) && !defined(EOS_HYBRID_INCLUDED)
+# if  defined(EOS_GAMMA_INCLUDED)             || \
+      defined(EOS_HELMHOLTZ_INCLUDED)
+#   error Multiple EOS implementations included with WeakLib without Hybrid
+# endif
+#endif
+
+#if defined(EOS_HELMHOLTZ_INCLUDED) && !defined(EOS_HYBRID_INCLUDED)
+# if  defined(EOS_GAMMA_INCLUDED)             || \
+      defined(EOS_WEAKLIB_INCLUDED)
+#   error Multiple EOS implementations included with Helmholtz without Hybrid
+# endif
+#endif

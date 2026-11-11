@@ -104,9 +104,10 @@ subroutine Grid_updateRefinement(nstep, time, gridChanged)
                                         gr_restrictAllLevels
   use gr_specificData,           ONLY : gr_bndGCFillNeedsPrimitiveVars
   use gr_physicalMultifabs,      ONLY : unk
+  use gr_leafBlockInfo,          ONLY : gr_leafBlockInfoUpdate
   use Grid_iterator,             ONLY : Grid_iterator_t
   use Grid_tile,                 ONLY : Grid_tile_t
-  use Eos_interface,             ONLY : Eos_wrapped
+  use Eos_interface,             ONLY : Eos_multiDim
   use Timers_interface,          ONLY : Timers_start, Timers_stop
   use Particles_interface,       ONLY : Particles_updateRefinement
   use Logfile_interface, ONLY:  Logfile_stampMessage
@@ -269,7 +270,7 @@ include "Flashx_mpi.h"
                                   tileDesc%blkLimitsGC(HIGH, :), &
                                   NUNK_VARS)
 
-          call Eos_wrapped(gr_eosMode, tileDesc%grownLimits, solnData)
+          call Eos_multiDim(gr_eosMode, tileDesc%grownLimits, tileDesc%blkLimitsGC(LOW,:),solnData)
  
           call tileDesc%releaseDataPtr(solnData, CENTER)
           call itor%next()
@@ -298,7 +299,7 @@ include "Flashx_mpi.h"
                                   NUNK_VARS)
           end if
 
-          call Eos_wrapped(gr_eosMode, tileDesc%grownLimits, solnData)
+          call Eos_multiDim(gr_eosMode, tileDesc%grownLimits, tileDesc%blkLimitsGC(LOW,:),solnData)
 
           call tileDesc%releaseDataPtr(solnData, CENTER)
           call itor%next()
@@ -326,7 +327,7 @@ include "Flashx_mpi.h"
           call itor%currentTile(tileDesc)
 
           call tileDesc%getDataPtr(solnData, CENTER)
-          call Eos_wrapped(gr_eosMode, tileDesc%grownLimits, solnData)
+          call Eos_multiDim(gr_eosMode, tileDesc%grownLimits, tileDesc%blkLimitsGC(LOW,:),solnData)
           call tileDesc%releaseDataPtr(solnData, CENTER)
 
           call itor%next()
@@ -370,7 +371,10 @@ include "Flashx_mpi.h"
 
      ! Only log on the first call
 !     gcMaskArgsLogged = .TRUE.
-     if (gr_amrexDidRefinement) call Driver_notifyGridChange()
+     if (gr_amrexDidRefinement) then
+        call gr_leafBlockInfoUpdate()
+        call Driver_notifyGridChange()
+     end if
 
      if (present(gridChanged)) then
         gridChanged = gr_amrexDidRefinement

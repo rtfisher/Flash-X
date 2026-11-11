@@ -31,12 +31,18 @@ io:--with-unit=IO:
 serialIO:parallelIO=False:
 parallelIO:parallelIO=True:
 hdf5:IO=hdf5:
+#compression:
+hdf5zfp:IO=hdf5:HDF5ZFP=True
+hdf5sz:IO=hdf5:HDF5SZ=True
+hdf5sz3:IO=hdf5:HDF5SZ3=True
 # when async is complete remove IO=hdf5
 asynchdf5:IO=hdf5:AsyncHDF5=True
 pnetcdf:IO=pnetcdf:
 hdf5TypeIO:+io:+parallelIO:+hdf5:typeIO=True
 hdf5AsyncIO:+parallelIO:+asynchdf5
 pnetTypeIO:+io:+parallelIO:+pnetcdf:typeIO=True
+# unifyfs
+unifyFS:+io:+parallelIO:+hdf5:unifyFS=True
 
 # other optional but useful stuff
 nolog:-without-unit=monitors/Logfile:
@@ -47,7 +53,45 @@ ug:+grid:Grid=UG:
 pm40:+grid:Grid=PM40:
 pm3:+pm40
 amrex:Grid=Amrex:-unit=Grid/GridMain/AMR/Amrex:-index-reorder
-milhoja:Grid=Milhoja:-unit=Grid/GridMain/AMR/Milhoja:-index-reorder
+
+# Using the Milhoja library only for the Grid implementation:
+mh_grid:Grid=Milhoja:-unit=Grid/GridMain/AMR/Milhoja:-with-unofficial=Grid/GridMain/AMR/Milhoja:-index-reorder:Milhoja=AMReX
+# Using the Milhoja library only for the Orchestration implementation: (also needs Milhoja=...)
+mh_orch:-unit=Orchestration/OrchestrationMain/Milhoja:-with-unofficial=Orchestration/OrchestrationMain/Milhoja:-index-reorder
+
+#Using Eos in variants mode
+eoshelmCPU:-with-unit=physics/Eos/EosMain/NULL:-with-unit=physics/Eos/EosMain/Helmholtz/NULL
+eosgamCPU: -with-unit=physics/Eos/EosMain/CPU:-with-unit=physics/Eos/EosMain/Gamma/CPU 
+eoswlCPU: -with-unit=physics/Eos/EosMain/NULL:-with-unit=physics/Eos/EosMain/WeakLib/NULL
+
+eoshelmGPU:-with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/Helmholtz/GPU
+eosgamGPU: -with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/Gamma/GPU
+eoswlGPU: -with-unit=physics/Eos/EosMain/GPU:-with-unit=physics/Eos/EosMain/WeakLib/GPU
+
+### For execute-style ORCHA ### (needs libmilhoja or libmilhoja_grid)
+# Using the Milhoja library for Grid and Orchestration implementations, CPU tt config only:
+mh_exec_cpu:+mh_grid:+mh_orch:-defines=RUNTIME_MUST_USE_TILEITER:Milhoja=AMReX,none,none
+# Using the Milhoja library for Grid and Orchestration implementations, GPU tt configs via CUDA:
+mh_exec:+mh_grid:+mh_orch:-defines=RUNTIME_MUST_USE_TILEITER:Milhoja=AMReX,CUDA,OpenACC
+# Using the Milhoja library for Grid and Orchestration implementations, fake "GPU" tt configs on CPU:
+mh_exec_fakecuda:+mh_grid:+mh_orch:-defines=RUNTIME_MUST_USE_TILEITER:Milhoja=AMReX,HOSTMEM,OpenACC
+
+### For pushTile-style ORCHA ### (needs libmilhoja or libmilhoja_nogrid)
+# Using the Milhoja library for the Orchestration implementation, CPU tt config only:
+mh_push_cpu:+mh_orch:Milhoja=none,none,OpenACC
+# Using the Milhoja library for the Orchestration implementation, GPU tt config via CUDA:
+mh_push:+mh_orch:Milhoja=none,CUDA,OpenACC
+# Using the Milhoja library for the Orchestration implementation, fake "GPU" tt configs on CPU:
+mh_push_fakecuda:+mh_orch:Milhoja=none,HOSTMEM,OpenACC
+
+### For any-style ORCHA ### (When needed, use +mh_grid *before* one of these shortcuts)
+mh_cpu:+mh_orch:Milhoja=AMReX,none,OpenACC
+mh_gpu:+mh_orch:Milhoja=AMReX,CUDA,OpenACC
+mh_fakecuda:+mh_orch:Milhoja=AMReX,HOSTMEM,OpenACC
+
+### Default Milhoja Shortcut ### (compatibility / maybe override for site)
+milhoja:+mh_grid:+mh_gpu
+
 
 # pm4dev_clean indicates a version of Paramesh closer to the one
 # that can be downloaded from sourceforge.  pm4dev indicates a 
@@ -161,12 +205,14 @@ ddt:use_ddt=True:--defines=DDT:--with-unit=source/monitors/Debugger/DebuggerMain
 nolwf:NoLevelwideFluxes=True:useAmrexFlashFluxreg=True
 
 # Support for Spark solver(s)
-sparkbase:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:
-sparkInhost:+sparkbase:--with-unit=physics/Hydro/HydroMain/Spark/Inhost
-sparkOffload:+sparkbase: --with-unit=physics/Hydro/HydroMain/Spark/Offload
-spark:+sparkbase: --with-unit=physics/Hydro/HydroMain/Spark/Null
+spark:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf
+sparkbase1d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-1d:
+sparkbase2d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-2d:+sqr16
+sparkbase3d:--with-unit=physics/Hydro/HydroMain/Spark:+nolwf:-3d:+cube16
+sparkGLM:+spark:useGLM=True:useTVD=True
 # for future
 spark3:--with-unit=physics/Hydro/HydroMain/Spark/rk3:Spark=True:+nolwf
+sparklwf:--with-unit=physics/Hydro/HydroMain/Spark:NoLevelwideFluxes=False
 
 # Shortcut to use XNet
 xnet:--with-unit=physics/sourceTerms/Burn/BurnMain/nuclearBurn/XNet:xnet=True
@@ -178,13 +224,41 @@ a13:--with-unit=physics/sourceTerms/Burn/BurnMain/nuclearBurn/Aprox13
 
 a19:--with-unit=physics/sourceTerms/Burn/BurnMain/nuclearBurn/Aprox19
 
-#Shortcut for thornado with GPUs
+#Shortcuts for thornado and weaklib
 thornado:--with-unit=physics/RadTrans/RadTransMain/TwoMoment/Thornado
-thornadoGPU:+thornado:thornadoGPU=True:-defines=THORNADO_GPU
+thornadoGPU:+thornado:-defines=THORNADO_GPU
+
+thornadoAMD:+thornadoGPU:thornadoGPU=AMD:-defines=THORNADO_HIP,THORNADO_LA_ROCM
+thornadoNVIDIA:+thornadoGPU:thornadoGPU=NVIDIA:-defines=THORNADO_CUDA,THORNADO_LA_CUBLAS
+thornadoINTEL:+thornadoGPU:thornadoGPU=INTEL:-defines=THORNADO_LA_ONEMKL
+
+thornadoOMP:+thornado:thornadoOMP=True:-defines=THORNADO_OMP
 thornadoACC:+thornadoGPU:thornadoACC=True:-defines=THORNADO_OACC
+thornadoOMP_OL:+thornadoGPU:thornadoOMP_OL=True:-defines=THORNADO_OMP_OL
+
 
 weaklib:useWeaklib=True:--with-unit=physics/Eos/EosMain/WeakLib:-defines=MICROPHYSICS_WEAKLIB
+weaklibOMP:+weaklib:weaklibOMP=True:-defines=WEAKLIB_OMP
 weaklibACC:+weaklib:weaklibACC=True:-defines=WEAKLIB_OACC
+weaklibOMP_OL:+weaklib:weaklibOMP_OL=True:-defines=WEAKLIB_OMP_OL
 
 # Shortcut to use starkiller eos
 starkiller:--with-unit=physics/Eos/EosMain/Helmholtz/SpeciesBased/starkiller
+
+# MoL Shortcut
+MoL:--with-unit=numericalTools/MoL:--with-unofficial=numericalTools/MoL:useMoL=True
+MoLERK:+MoL:MoL_Integrator="ERK"
+MoLIMEX:+MoL:MoL_Integrator="IMEX"
+MoLMR:+MoL:MoL_Integrator="MR"
+
+# Incomp shortcut
+incomp:Incomp=True:IOWriteGridFiles=True:InsPresLaplacian=False:InsForceInOut=True:InsLSDamping=False:InsExtras=True
+
+# Profiler shortcuts
+hpctoolkit:Profiler=Hpctoolkit:--with-unit=monitors/Profiler/ProfilerMain/hpctoolkit
+
+# Turbulence stirring (driving, forcing) and/initial conditions
+stir:--with-unit=physics/sourceTerms/Stir/StirMain
+stir_ics:--with-unit=physics/sourceTerms/StirICs/StirICsMain
+stir_amr:--with-unit=physics/sourceTerms/Stir/StirMain/AMR
+stir_injection:--with-unit=physics/sourceTerms/Stir/StirMain/InjectionRate

@@ -64,7 +64,7 @@
 !!  More succinctly, all intent(in) arguments should have the same values on all
 !!  tasks, except for blkList and blkCount.
 !!
-!!  On return, ansBlockID and ansBlockID will contain the same values on all tasks.
+!!  On return, ansBlockID and ansProcID will contain the same values on all tasks.
 !!
 !!  BITTREE is not used in implementations of this interface.
 !!

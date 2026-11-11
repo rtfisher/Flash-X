@@ -59,16 +59,17 @@ subroutine Grid_initDomain(restart,particlesInitialized)
                               gr_postinterpolationWork
   use amrex_fillpatch_module,    ONLY : amrex_fillpatch
 
-  use Eos_interface, ONLY : Eos_wrapped
+  use Eos_interface, ONLY : Eos_multiDim
   use Grid_data,            ONLY : gr_doFluxCorrection
   use gr_physicalMultifabs, ONLY : unk, &
                                    gr_scratchCtr, &
-                                   facevarx, facevary, facevarz, &
+                                   facevars, &
                                    fluxes, &
                                    flux_registers
   use Grid_data, ONLY : gr_globalNumBlocks, gr_globalDomain, gr_interpolator, &
                       lo_bc_amrex, hi_bc_amrex, gr_eosModeInit, &
                       gr_maxRefine, gr_doFluxCorrection
+  use gr_leafBlockInfo,          ONLY : gr_leafBlockInfoUpdate
 
   use Driver_interface,     ONLY : Driver_abort
   use Grid_iterator,             ONLY : Grid_iterator_t
@@ -121,14 +122,9 @@ subroutine Grid_initDomain(restart,particlesInitialized)
     allocate(unk     (0:amrex_max_level))
 
 #if NFACE_VARS > 0
-    !call Driver_abort("[Grid_initDomain] Face-centered variables not yet supported with AMReX Grid implementation")
-    allocate(facevarx(0:amrex_max_level))
-#if NDIM >= 2
-    allocate(facevary(0:amrex_max_level))
-#endif
-#if NDIM == 3
-    allocate(facevarz(0:amrex_max_level))
-#endif
+    ! Use NDIM multifab for face variables
+    ! TODO: Check how indexing affects peformance
+    allocate(facevars(1:NDIM, 0:amrex_max_level))
 #endif
 
     ! DEV: T_INIT is set to zero now as AMReX does not care about this value.
@@ -136,7 +132,9 @@ subroutine Grid_initDomain(restart,particlesInitialized)
     ! this might be time a part of \FlashOfTheFuture with simulated time passed as T_INIT
     ! that is read from checkpoint file. Useful with user-defined callbacks
     call amrex_init_from_scratch(T_INIT)
-  else ! this is a restart 
+    call gr_leafBlockInfoUpdate()
+  else ! this is a restart
+    call gr_leafBlockInfoUpdate()
     call Simulation_initRestart()
   end if
 

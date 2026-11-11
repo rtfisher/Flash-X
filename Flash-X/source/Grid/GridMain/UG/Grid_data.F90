@@ -26,8 +26,6 @@
 !!
 !!***
 
-!!REORDER(5):scratch, scratch_ctr, scratch_facevar[xyz]
-
 
 Module Grid_data
   implicit none
@@ -82,9 +80,6 @@ Module Grid_data
 
   logical, save :: gr_useEnergyDeposition
 
-  !mostly not used, but convienent for debugging with Grid_dump tool
-  integer,save,dimension(UNK_VARS_BEGIN:UNK_VARS_END) :: gr_vars 
- 
   real, save, dimension(MDIM,1) :: gr_delta
   real, save, dimension(LOW:HIGH,MDIM) :: gr_globalDomain
 
@@ -99,7 +94,7 @@ Module Grid_data
   real, save, dimension(MDIM) :: gr_minCellSizes
 
   !below values needed to make data structures for IO output
-  integer,save :: gr_globalOffset !stores beginning blk offset for a proc
+!!  integer,save :: gr_globalOffset !stores beginning blk offset for a proc
   integer,save,target,allocatable, dimension(:,:) :: gr_gid  !holds neigh, child, parent info for checkpoint files
   integer, save :: gr_globalNumBlocks !
   integer, save, allocatable :: gr_nToLeft(:) !array holding local blocks on each proc, used to calc blk offset for IO
@@ -117,4 +112,5 @@ Module Grid_data
   logical, save :: gr_enableTiling
   logical, save :: gr_useTiling
   integer, save :: gr_tileSize(1:MDIM)
+  integer, save :: gr_maxCells
 end Module Grid_data

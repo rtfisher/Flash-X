@@ -1,6 +1,6 @@
 !!****ih* source/Grid/GridMain/AMR/Paramesh4/Grid_tile
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2024 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 !!REORDER(4): dataPtr
 
+#include "FortranLangFeatures.fh"
 #include "constants.h"
 #include "Simulation.h"
 
@@ -25,7 +26,7 @@ module Grid_tile
 
     private
 
-    type, public :: Grid_tile_t 
+    type, public :: Grid_tile_t
         integer :: id
         integer :: cid(MDIM)
         integer :: stride(MDIM)
@@ -41,6 +42,7 @@ module Grid_tile
         procedure, public :: getDataPtr
         procedure, public :: releaseDataPtr
         procedure, public :: enclosingBlock
+        procedure, public :: fillTileCInfo
     end type Grid_tile_t
 
 contains
@@ -55,11 +57,13 @@ contains
     end subroutine deltas
 
     subroutine boundBox(this, box)
+        use Grid_data,        ONLY: gr_delta
         use tree,             ONLY : bnd_box
         use Driver_interface, ONLY : Driver_abort
 
         class(Grid_tile_t), intent(IN)  :: this
         real,               intent(OUT) :: box(LOW:HIGH, 1:MDIM)
+        integer         :: i
   
         if (this%id <= 0) then
            print *, "blockId = ", this%id
@@ -67,15 +71,26 @@ contains
         end if
   
         box = bnd_box(:, :, this%id)
-    end subroutine boundBox 
+        do i = 1,NDIM
+           box(LOW,i)  = box(LOW,i)  + (this%limits(LOW,i)  - this%blkLimitsGC(LOW,i)  - NGUARD) * gr_delta(i, this%level)
+           box(HIGH,i) = box(HIGH,i) + (this%limits(HIGH,i) - this%blkLimitsGC(HIGH,i) + NGUARD) * gr_delta(i, this%level)
+        end do
+    end subroutine boundBox
 
     subroutine physicalSize(this, tileSize) 
+        use Grid_data, ONLY: gr_delta
         use tree, ONLY : bsize
 
         class(Grid_tile_t), intent(IN)  :: this
-        real,               intent(OUT) :: tileSize(1:MDIM) 
+        real,               intent(OUT) :: tileSize(1:MDIM)
+        integer         :: i
       
         tileSize = bsize(:, this%id)
+        do i = 1,NDIM
+           tileSize(i) = tileSize(i) + gr_delta(i, this%level) * &
+                ( this%limits(HIGH,i) - this%limits(LOW,i) + this%blkLimitsGC(LOW,i) - this%blkLimitsGC(HIGH,i) + 2*NGUARD )
+        end do
+
     end subroutine physicalSize
 
     subroutine faceBCs(this, faces, onBoundary)
@@ -166,8 +181,12 @@ contains
         use gr_specificData, ONLY : gr_flxx, gr_flxy, gr_flxz
 #endif
 
-       class(Grid_tile_t), intent(IN), target   :: this
-       real,                           pointer  :: dataPtr(:, :, :, :)
+       class(Grid_tile_t), intent(IN)           :: this
+#ifdef DEBUG_GRID
+       real,               pointer              :: dataPtr(:, :, :, :)
+#else
+       real,               POINTER_INTENT_OUT   :: dataPtr(:, :, :, :)
+#endif
        integer,            intent(IN)           :: gridDataStruct
        logical,            intent(IN), optional :: localFlag
 
@@ -196,12 +215,12 @@ contains
           print *, 'Grid_getBlkPtr:  invalid blockid ',this%id
           call Driver_abort("[getDataPtr] invalid blockid ")
        end if
-#endif
 
        ! Avoid possible memory leaks
        if (associated(dataPtr)) then
            call Driver_abort("[getDataPtr] Given data pointer must be NULL")
        end if
+#endif
 
        lo = this%blkLimitsGC(LOW, :)
 
@@ -289,5 +308,53 @@ contains
         nullify(dataPtr)
     end subroutine releaseDataPtr
 
+    subroutine fillTileCInfo(this, cInfo)
+        use Orchestration_interfaceTypeDecl, ONLY: Orchestration_tileCInfo_t
+        use Grid_data, ONLY: gr_useOrchestration
+        use Grid_data, ONLY: gr_delta
+        use,intrinsic :: iso_c_binding
+        class(Grid_tile_t), intent(IN)                :: this
+        type(Orchestration_tileCInfo_t),intent(OUT)   :: cInfo
+        real,pointer,contiguous :: fBlkPtr(:,:,:,:)
+
+#ifdef FLASHX_ORCHESTRATION
+#ifdef FLASHX_ORCHESTRATION_MILHOJA
+#include "Milhoja.h"
+#ifndef RUNTIME_MUST_USE_TILEITER
+        if (gr_useOrchestration) then
+           cInfo % CInts % nCcComp      = NUNK_VARS
+           cInfo % CInts % nFluxComp    = NFLUXES
+           cInfo % CInts % loGC(1:MDIM) = this % blklimitsGC(LOW,:)
+           cInfo % CInts % hiGC(1:MDIM) = this % blkLimitsGC(HIGH,:)
+           cInfo % CInts % lo(1:MDIM)   = this % limits(LOW,:)
+           cInfo % CInts % hi(1:MDIM)   = this % limits(HIGH,:)
+           cInfo % CInts % ndim         = NDIM
+           cInfo % CInts % level        = this % level
+           cInfo % CInts % gridIdxOrBlkId = this % id
+           cInfo % CInts % tileIdx      = 0 !not meaningful / not know to Grid_tile
+           
+           cInfo % CReals % deltas(1:MDIM) = gr_delta(1:MDIM, this%level)
+           
+           cInfo % CPtrs % ccBlkPtr = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(IAXIS) = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(JAXIS) = C_NULL_PTR
+           cInfo % CPtrs % fluxBlkPtrs(KAXIS) = C_NULL_PTR
+
+           call this % getDataPtr(fBlkPtr, CENTER)
+           if(associated(fBlkPtr)) cInfo % CPtrs % ccBlkPtr = c_loc(fBlkPtr)
+#ifdef USE_LEVELWIDE_FLUXES
+           call this % getDataPtr(fBlkPtr, FLUXX)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(IAXIS) = c_loc(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, FLUXY)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(JAXIS) = c_loc(fBlkPtr)
+           call this % getDataPtr(fBlkPtr, FLUXZ)
+           if(associated(fBlkPtr)) cInfo % CPtrs % fluxBlkPtrs(KAXIS) = c_loc(fBlkPtr)
+#endif
+        end if
+#endif
+#endif
+#endif
+        
+      end subroutine fillTileCInfo
 end module Grid_tile
 

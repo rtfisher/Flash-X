@@ -1,6 +1,6 @@
 !!****if* source/Driver/DriverMain/MoL/dr_molPostRegrid
 !! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!!  Copyright 2023 UChicago Argonne, LLC and contributors
 !!
 !!  Licensed under the Apache License, Version 2.0 (the "License");
 !!  you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@
 !!
 !!***
 subroutine dr_molPostRegrid(t)
-   ! use Spacetime_interface,  only: Spacetime_molPostRegrid
    use Hydro_interface, only: Hydro_molPostRegrid
    use RadTrans_interface, only: RadTrans_molPostRegrid
    use Simulation_interface, only: Simulation_molPostRegrid
@@ -43,7 +42,6 @@ subroutine dr_molPostRegrid(t)
 
    real, intent(in) :: t
 
-   ! call Spacetime_molPostRegrid  (t)
    call Hydro_molPostRegrid(t)
    call RadTrans_molPostRegrid(t)
    call Simulation_molPostRegrid(t)

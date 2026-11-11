@@ -22,14 +22,17 @@
 !!                                 real(IN), TARGET,CONTIGUOUS :: fluxBufY(lo(1): ,lo(2): ,lo(3): ,: ),
 !!                                 real(IN), TARGET,CONTIGUOUS :: fluxBufZ(lo(1): ,lo(2): ,lo(3): ,: ),
 !!                                 integer(in)           :: lo(3),
-!!                                 real(OUT),TARGET,CONTIGUOUS :: fluxCorrX(lo(1): ,lo(2): ,lo(3): ,: ),
-!!                                 real(OUT),TARGET,CONTIGUOUS :: fluxCorrY(lo(1): ,lo(2): ,lo(3): ,: ),
-!!                                 real(OUT),TARGET,CONTIGUOUS :: fluxCorrZ(lo(1): ,lo(2): ,lo(3): ,: ),
-!!                                 logical(IN), OPTIONAL :: isFluxDensity)
+!!                                 real(OUT),TARGET            :: fluxCorrX(lo(1): ,lo(2): ,lo(3): ,: ),
+!!                                 real(OUT),TARGET            :: fluxCorrY(lo(1): ,lo(2): ,lo(3): ,: ),
+!!                                 real(OUT),TARGET            :: fluxCorrZ(lo(1): ,lo(2): ,lo(3): ,: ),
+!!                                 logical(IN), OPTIONAL :: isFluxDensity(:))
 !!
 !! DESCRIPTION
 !!
 !!   Get flux corrections from semipermanent flux storage (SPFS).
+!!
+!!     fluxCorr :=  "communicated fine fluxes" - fluxBuf  AT coarse side of f/c bdry;
+!!              :=  0.0                                   ELSEWHERE.
 !!
 !!   Flux corrections are returned in fluxCorr[XYZ] arguments.
 !!   The arguments fluxBuf[XYZ] are input only and represent coarse
@@ -109,9 +112,9 @@ subroutine Grid_getFluxCorrData_xtra(blockDesc,fluxBufX,fluxBufY,fluxBufZ, lo, f
   CONTIGUOUS_FSTMT(fluxBufX)
   CONTIGUOUS_FSTMT(fluxBufY)
   CONTIGUOUS_FSTMT(fluxBufZ)
-  CONTIGUOUS_FSTMT(fluxCorrX)
-  CONTIGUOUS_FSTMT(fluxCorrY)
-  CONTIGUOUS_FSTMT(fluxCorrZ)
+!!$  CONTIGUOUS_FSTMT(fluxCorrX)
+!!$  CONTIGUOUS_FSTMT(fluxCorrY)
+!!$  CONTIGUOUS_FSTMT(fluxCorrZ)
   logical, intent(IN), OPTIONAL :: isFluxDensity(:) !maybe eliminate
 
   real,parameter    :: scaleF = 1.0, scaleC = -1.0

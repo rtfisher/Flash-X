@@ -33,23 +33,30 @@
 !!***
 
 #include "constants.h"
+#include "Simulation.h"
 
 subroutine Simulation_init()
 
-  use Driver_interface, ONLY : Driver_getMype
-  use Simulation_data, ONLY : sim_xMin, sim_yMin, &
+   use Driver_interface, ONLY: Driver_getMype
+   use Simulation_data, ONLY: sim_xMin, sim_yMin, &
                               sim_xMax, sim_yMax, &
+                              sim_zMin, sim_zMax, &
+                              sim_bubbleRadius, &
                               sim_meshMe
 
-  use RuntimeParameters_interface, ONLY : RuntimeParameters_get
+   use RuntimeParameters_interface, ONLY: RuntimeParameters_get
 
-  implicit none
+   implicit none
 
-  call Driver_getMype(MESH_COMM, sim_meshMe)
+   call Driver_getMype(MESH_COMM, sim_meshMe)
 
-  call RuntimeParameters_get('xmin',    sim_xMin)
-  call RuntimeParameters_get('ymin',    sim_yMin)
-  call RuntimeParameters_get('xmax',    sim_xMax)
-  call RuntimeParameters_get('ymax',    sim_yMax)
+   call RuntimeParameters_get('xmin', sim_xMin)
+   call RuntimeParameters_get('ymin', sim_yMin)
+   call RuntimeParameters_get('zmin', sim_zMin)
+   call RuntimeParameters_get('xmax', sim_xMax)
+   call RuntimeParameters_get('ymax', sim_yMax)
+   call RuntimeParameters_get('zmax', sim_zMax)
+
+   call RuntimeParameters_get('sim_bubbleRadius', sim_bubbleRadius)
 
 end subroutine Simulation_init

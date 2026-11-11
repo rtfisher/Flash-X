@@ -60,6 +60,27 @@ USEFUL VARIABLES
 
   Selects what kind of IO to use. 
 
+* Name  : HDF5ZFP
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+ZFP compression support. The `+hdf5zfp` shortcut sets
+  `IO=hdf5` and `HDF5ZFP=True`.
+
+* Name  : HDF5SZ
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+SZ compression support. The `+hdf5sz` shortcut sets
+  `IO=hdf5` and `HDF5SZ=True`.
+
+* Name  : HDF5SZ3
+  Type  : Boolean
+  Values: True, False
+
+  Enables HDF5+SZ3 compression support. The `+hdf5sz3` shortcut sets
+  `IO=hdf5` and `HDF5SZ3=True`.
+
 * Name  : parallelIO
   Type  : Boolean
   Values: True, False
@@ -282,13 +303,15 @@ Harder to introduce now because we have multiple particle types)
   The logic of creating xmf files is implemented via the command line
   tool - FlashKit: https://github.com/akashdhruv/FlashKit
 
-* Name  : SimForceInOut
-  Type  : Boolean
+* Name  : HydroGuardcells
+  Type  : Integer
 
-  Defaults to False. If True, will apply inlet/outlet forcing for 
-  - Simulation/SimulationMain/incompFlow/RisingBubble
-  - Simulation/SimulationMain/incompFlow/PoolBoiling
-  - Simulation/SimulationMain/incompFlow/ChannelFlow
+  Can be used to generate a GUARDCELLS Config directive with a
+  nondefault value in some Hydro implementations, under certain
+  conditions. Recognized by the Spark Hydro implementation when
+  it is used in its nontelescoping variant.
+  Experimentally, recognized also by "unsplit" and "simpleUnsplit"
+  Hydro implementations.
 
 * Name  : useWeaklib
   Type  : Boolean
@@ -297,3 +320,71 @@ Harder to introduce now because we have multiple particle types)
   If true, units querying this setup variable (e.g. Thornado) will
   require that the weaklib library is built during setup and
   subsequently linked against
+
+* Name  : useMoL
+  Type  : Boolean
+  Remark: Automatically set to True by +MoL shortcut
+  
+  If true, units querying this setup variable can make setup-time
+  choices for MoL compatibility
+
+* Name  : MoL_integrator
+  Type  : String
+  Values: ERK, IMEX, MR
+  Remark: Automatically set by +MoLERK, +MoLIMEX, +MoLMR shortcuts
+  
+  Selects the explicit RK (ERK), implicit-explicit (IMEX), or multi-
+  rate IMEX (MR) MoL integrator implementation
+
+* Name  : InsPresLaplacian
+  Type  : Boolean
+
+  Default to False. Used to select Laplacian pressure solver for
+  variable density Incompressible Navier-Stokes Simulations
+
+* Name  : Incomp
+  Type  : Boolean
+
+  Defaults to False. Used to apply unit specific customization for
+  Incompressible Navier-Stokes Simulations
+
+* Name  : InsForceInOut
+  Type  : Boolean
+
+  Defaults to False. If True, will apply inlet/outlet forcing
+
+* Name  : InsLSDamping
+  Type  : Boolean
+
+  Defaults to False. If True, will apply apply level-set damping if
+  InsForceInOut is True
+
+* Name  : InsExtras
+  Type  : Boolean
+
+  Defaults to False. If True, will include physics/IncompNS/IncompNSExtras
+
+* Name  : Profiler
+  Type  : String
+  Values: Hpctoolkit, Mpihpm 
+  Remark: Automatically set by +hpctoolkit, +mpihpm
+
+  Selects which Profiler to use.
+
+* Name  : Milhoja
+  Type  : String
+
+  This must be provided if the Milhoja Grid implementation or Milhoja
+  Orchestration units are used.  Its value is specified as either
+        Milhoja=<grid backend> or
+        Milhoja=<grid backend>,<runtime backend>,<offloading>
+  If the Orchestration unit is not used and the 3 argument version is
+  provided, then the last two values are ignored.
+        <grid backend>    must be AMReX
+        <runtime backend> either None or CUDA
+        <offloading>      either None or OpenACC
+
+* Name  : HeaterFluxBC
+  Type  : Boolean
+
+  Flag to activate flux boundary condition treatment for heater

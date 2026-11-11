@@ -19,6 +19,9 @@ subroutine gr_amrexMultigridFinalize()
     deallocate(gr_amrexMG_rhs)
     deallocate(gr_amrexMG_ba)
     deallocate(gr_amrexMG_dm)
+    deallocate(gr_amrexMG_acoef)
+    deallocate(gr_amrexMG_bcoef)
+    deallocate(gr_amrexMG_gradient)
     call Timers_stop("gr_multigridAmrexFinalize")
 
 end subroutine gr_amrexMultigridFinalize

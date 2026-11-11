@@ -77,7 +77,16 @@ def generateFlashDefines(configInfo):
     tpl['nflux'] = len(configInfo['FLUX'])
     tpl['nrealprops'] = configInfo['n_real_props']
     tpl['nscratchvars'] = len(configInfo['SCRATCHVAR'])
-    tpl['nscratchcentervars'] = len(configInfo['SCRATCHCENTERVAR'])
+    if configInfo.get('NSCRATCHCENTERVARS') is not None:
+        if configInfo['NSCRATCHCENTERVARS'].isdecimal():
+            tpl['nscratchcentervars'] = max(len(configInfo['SCRATCHCENTERVAR']),int(configInfo['NSCRATCHCENTERVARS']))
+        elif ((len(configInfo['SCRATCHCENTERVAR']) == 0) or
+              (("max(%s," % len(configInfo['SCRATCHCENTERVAR'])) in configInfo['NSCRATCHCENTERVARS'])):
+            tpl['nscratchcentervars'] = configInfo['NSCRATCHCENTERVARS']
+        else:
+            tpl['nscratchcentervars'] = "max(%s,%s)" % (len(configInfo['SCRATCHCENTERVAR']),configInfo['NSCRATCHCENTERVARS'])
+    else:
+        tpl['nscratchcentervars'] = len(configInfo['SCRATCHCENTERVAR'])
     tpl['nscratchfacexvars'] = len(configInfo['SCRATCHFACEXVAR'])
     tpl['nscratchfaceyvars'] = len(configInfo['SCRATCHFACEYVAR'])
     tpl['nscratchfacezvars'] = len(configInfo['SCRATCHFACEZVAR'])
@@ -104,6 +113,12 @@ def generateFlashDefines(configInfo):
 
     tpl['nparticletypes'] = configInfo['nparticletypes']    
     tpl["particletypeDefines"]  = makeDefines(configInfo['particletype'], "PART_TYPE", 0)
+
+    tpl["nevol"] = configInfo["nevol"]
+    tpl["nmolrhsvars"] = configInfo["nmolrhsvars"]
+    tpl["nmolinitvars"] = configInfo["nmolinitvars"]
+    tpl["nmolscratch"] = configInfo["nmolscratch"]
+    tpl["nmolscratchvars"] = configInfo["nmolscratchvars"]
 
 #  The use of mfrac_specDefine is a leftover from times when we used to enforce that there
 #  was always one mass fraction variable in UNK (giving it the name MFRAC_SPEC if no
@@ -573,6 +588,9 @@ CPPCOMP=tau_cxx.sh -tau_makefile=$(TAU_MAKEFILE) -tau_options=$(TAU_OPTIONS)"""
     makefiles = glob.glob('Makefile.*')
     #FIXME remove this once all those makefile dependencies are fixed.
     makefiles.sort()
+    # injecting Makefile.Milhoja for Milhoja-generated files
+    if GVars.setupVars.get("Milhoja"):
+        makefiles.append("Makefile.Milhoja")
     ", ".join(makefiles)
 
     try:

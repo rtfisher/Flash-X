@@ -94,6 +94,49 @@ subroutine IO_init()
 
   call Driver_getComm(GLOBAL_COMM,io_globalComm)
 
+#ifdef FLASH_HDF5_ZFP
+  call RuntimeParameters_get('zfp_accuracy', io_zfp_accuracy)
+  call RuntimeParameters_get('zfp_precision', io_zfp_precision)
+  call RuntimeParameters_get('zfp_rate', io_zfp_rate)
+  call RuntimeParameters_get('zfp_reversible', io_zfp_reversible)
+
+  call RuntimeParameters_get('zfp_accuracy_plt', io_zfp_accuracy_plt)
+  call RuntimeParameters_get('zfp_precision_plt', io_zfp_precision_plt)
+  call RuntimeParameters_get('zfp_rate_plt', io_zfp_rate_plt)
+  call RuntimeParameters_get('zfp_reversible_plt', io_zfp_reversible_plt)
+
+#endif
+
+#ifdef FLASH_HDF5_SZ
+  call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
+  call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
+  call RuntimeParameters_get('sz_pw_rel_error', io_sz_pw_rel_error)
+  call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+
+  call RuntimeParameters_get('sz_abs_error_plt', io_sz_abs_error_plt)
+  call RuntimeParameters_get('sz_rel_error_plt', io_sz_rel_error_plt)
+  call RuntimeParameters_get('sz_pw_rel_error_plt', io_sz_pw_rel_error_plt)
+  call RuntimeParameters_get('sz_psnr_plt', io_sz_psnr_plt)  
+#endif
+
+#ifdef FLASH_HDF5_SZ3
+  call RuntimeParameters_get('sz_abs_error', io_sz_abs_error)
+  call RuntimeParameters_get('sz_rel_error', io_sz_rel_error)
+  call RuntimeParameters_get('sz_psnr', io_sz_psnr)
+  call RuntimeParameters_get('sz_norm', io_sz_norm)
+  if ((io_sz_abs_error > 0) .AND. (io_sz_rel_error > 0)) then
+      call RuntimeParameters_get('sz_abs_and_rel_error', io_sz_abs_and_rel)
+  endif
+
+  call RuntimeParameters_get('sz_abs_error_plt', io_sz_abs_error_plt)
+  call RuntimeParameters_get('sz_rel_error_plt', io_sz_rel_error_plt)
+  call RuntimeParameters_get('sz_psnr_plt', io_sz_psnr_plt)
+call RuntimeParameters_get('sz_norm_plt', io_sz_norm_plt)
+  if ((io_sz_abs_error_plt > 0) .AND. (io_sz_rel_error_plt > 0)) then
+      call RuntimeParameters_get('sz_abs_and_rel_error_plt', io_sz_abs_and_rel_plt)
+  endif  
+#endif
+
   call RuntimeParameters_get('alwaysRestrictCheckpoint', io_alwaysRestrictCheckpoint)
   call RuntimeParameters_get('alwaysComputeUserVars', io_alwaysComputeUserVars)
   call RuntimeParameters_get('ignoreForcedPlot', io_ignoreForcedPlot)
@@ -263,13 +306,13 @@ subroutine IO_init()
   io_nPlotVars = j
 
 
-  if(NFACE_VARS .GT. 0) then
-    do i= 1, NFACE_VARS
-      WRITE(io_faceXVarLabels(i),'(''fcx'',I1)') i
-      WRITE(io_faceYVarLabels(i),'(''fcy'',I1)') i
-      WRITE(io_faceZVarLabels(i),'(''fcz'',I1)') i
-    end do
-  endif
+#if NFACE_VARS > 0
+  do i= 1, NFACE_VARS
+    WRITE(io_faceXVarLabels(i),'(''fcx'',I1)') i
+    WRITE(io_faceYVarLabels(i),'(''fcy'',I1)') i
+    WRITE(io_faceZVarLabels(i),'(''fcz'',I1)') i
+  end do
+#endif
 
 
   ! get all the IO scratch plot grid vars.  These are the scratch grid vars to
@@ -286,6 +329,72 @@ subroutine IO_init()
   call RuntimeParameters_get('plot_grid_var_10', io_plotGridVarStr(10))
   call RuntimeParameters_get('plot_grid_var_11', io_plotGridVarStr(11))
   call RuntimeParameters_get('plot_grid_var_12', io_plotGridVarStr(12))
+  call RuntimeParameters_get('plot_grid_var_13', io_plotGridVarStr(13))
+  call RuntimeParameters_get('plot_grid_var_14', io_plotGridVarStr(14))
+  call RuntimeParameters_get('plot_grid_var_15', io_plotGridVarStr(15))
+  call RuntimeParameters_get('plot_grid_var_16', io_plotGridVarStr(16))
+  call RuntimeParameters_get('plot_grid_var_17', io_plotGridVarStr(17))
+  call RuntimeParameters_get('plot_grid_var_18', io_plotGridVarStr(18))
+  call RuntimeParameters_get('plot_grid_var_19', io_plotGridVarStr(19))
+  call RuntimeParameters_get('plot_grid_var_20', io_plotGridVarStr(20))
+  call RuntimeParameters_get('plot_grid_var_21', io_plotGridVarStr(21))
+  call RuntimeParameters_get('plot_grid_var_22', io_plotGridVarStr(22))
+  call RuntimeParameters_get('plot_grid_var_23', io_plotGridVarStr(23))
+  call RuntimeParameters_get('plot_grid_var_24', io_plotGridVarStr(24))
+  call RuntimeParameters_get('plot_grid_var_25', io_plotGridVarStr(25))
+  call RuntimeParameters_get('plot_grid_var_26', io_plotGridVarStr(26))
+  call RuntimeParameters_get('plot_grid_var_27', io_plotGridVarStr(27))
+  call RuntimeParameters_get('plot_grid_var_28', io_plotGridVarStr(28))
+  call RuntimeParameters_get('plot_grid_var_29', io_plotGridVarStr(29))
+  call RuntimeParameters_get('plot_grid_var_30', io_plotGridVarStr(30))
+  call RuntimeParameters_get('plot_grid_var_31', io_plotGridVarStr(31))
+  call RuntimeParameters_get('plot_grid_var_32', io_plotGridVarStr(32))
+  call RuntimeParameters_get('plot_grid_var_33', io_plotGridVarStr(33))
+  call RuntimeParameters_get('plot_grid_var_34', io_plotGridVarStr(34))
+  call RuntimeParameters_get('plot_grid_var_35', io_plotGridVarStr(35))
+  call RuntimeParameters_get('plot_grid_var_36', io_plotGridVarStr(36))
+  call RuntimeParameters_get('plot_grid_var_37', io_plotGridVarStr(37))
+  call RuntimeParameters_get('plot_grid_var_38', io_plotGridVarStr(38))
+  call RuntimeParameters_get('plot_grid_var_39', io_plotGridVarStr(39))
+  call RuntimeParameters_get('plot_grid_var_40', io_plotGridVarStr(40))
+  call RuntimeParameters_get('plot_grid_var_41', io_plotGridVarStr(41))
+  call RuntimeParameters_get('plot_grid_var_42', io_plotGridVarStr(42))
+  call RuntimeParameters_get('plot_grid_var_43', io_plotGridVarStr(43))
+  call RuntimeParameters_get('plot_grid_var_44', io_plotGridVarStr(44))
+  call RuntimeParameters_get('plot_grid_var_45', io_plotGridVarStr(45))
+  call RuntimeParameters_get('plot_grid_var_46', io_plotGridVarStr(46))
+  call RuntimeParameters_get('plot_grid_var_47', io_plotGridVarStr(47))
+  call RuntimeParameters_get('plot_grid_var_48', io_plotGridVarStr(48))
+  call RuntimeParameters_get('plot_grid_var_49', io_plotGridVarStr(49))
+  call RuntimeParameters_get('plot_grid_var_50', io_plotGridVarStr(50))
+  call RuntimeParameters_get('plot_grid_var_51', io_plotGridVarStr(51))
+  call RuntimeParameters_get('plot_grid_var_52', io_plotGridVarStr(52))
+  call RuntimeParameters_get('plot_grid_var_53', io_plotGridVarStr(53))
+  call RuntimeParameters_get('plot_grid_var_54', io_plotGridVarStr(54))
+  call RuntimeParameters_get('plot_grid_var_55', io_plotGridVarStr(55))
+  call RuntimeParameters_get('plot_grid_var_56', io_plotGridVarStr(56))
+  call RuntimeParameters_get('plot_grid_var_57', io_plotGridVarStr(57))
+  call RuntimeParameters_get('plot_grid_var_58', io_plotGridVarStr(58))
+  call RuntimeParameters_get('plot_grid_var_59', io_plotGridVarStr(59))
+  call RuntimeParameters_get('plot_grid_var_60', io_plotGridVarStr(60))
+  call RuntimeParameters_get('plot_grid_var_61', io_plotGridVarStr(61))
+  call RuntimeParameters_get('plot_grid_var_62', io_plotGridVarStr(62))
+  call RuntimeParameters_get('plot_grid_var_63', io_plotGridVarStr(63))
+  call RuntimeParameters_get('plot_grid_var_64', io_plotGridVarStr(64))
+  call RuntimeParameters_get('plot_grid_var_65', io_plotGridVarStr(65))
+  call RuntimeParameters_get('plot_grid_var_66', io_plotGridVarStr(66))
+  call RuntimeParameters_get('plot_grid_var_67', io_plotGridVarStr(67))
+  call RuntimeParameters_get('plot_grid_var_68', io_plotGridVarStr(68))
+  call RuntimeParameters_get('plot_grid_var_69', io_plotGridVarStr(69))
+  call RuntimeParameters_get('plot_grid_var_70', io_plotGridVarStr(70))
+  call RuntimeParameters_get('plot_grid_var_71', io_plotGridVarStr(71))
+  call RuntimeParameters_get('plot_grid_var_72', io_plotGridVarStr(72))
+  call RuntimeParameters_get('plot_grid_var_73', io_plotGridVarStr(73))
+  call RuntimeParameters_get('plot_grid_var_74', io_plotGridVarStr(74))
+  call RuntimeParameters_get('plot_grid_var_75', io_plotGridVarStr(75))
+  call RuntimeParameters_get('plot_grid_var_76', io_plotGridVarStr(76))
+  call RuntimeParameters_get('plot_grid_var_77', io_plotGridVarStr(77))
+  call RuntimeParameters_get('plot_grid_var_78', io_plotGridVarStr(78))
 
 
   !translate the scratch grid vars from strings to integers
@@ -300,7 +409,7 @@ subroutine IO_init()
   do i=1, io_maxPlotGridVars
      call Simulation_mapStrToInt(trim(io_plotGridVarStr(i)), io_plotGridVar(i),MAPBLOCK_SCRATCH)
      if(io_plotGridVar(i) /= NONEXISTENT) then
-        print *, "got the plotvarstr ", io_plotGridVarStr(i) 
+        !print *, "got the plotvarstr ", io_plotGridVarStr(i)
         io_nPlotGridVars = io_nPlotGridVars + 1
      end if
   end do

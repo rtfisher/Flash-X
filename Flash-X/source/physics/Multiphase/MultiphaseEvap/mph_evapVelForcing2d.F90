@@ -14,15 +14,17 @@
 !!
 !!
 !!******
-subroutine mph_evapVelForcing2d(uni, vni, rhox, rhoy, visc, normx, normy, mflux, &
-                                ru1, dt, dx, dy, ix1, ix2, jy1, jy2)
+#include "constants.h"
+subroutine mph_evapVelForcing2d(uni, vni, rhox, rhoy, rhoc, visc, normx, normy, mflux, &
+                                ru1, dt, del, lo, hi)
 
    implicit none
    real, dimension(:, :, :), intent(inout) :: uni, vni
    real, dimension(:, :, :), intent(in)    :: rhox, rhoy
-   real, dimension(:, :, :), intent(in)    :: visc, normx, normy, mflux
-   real                                  :: ru1, dt, dx, dy
-   integer, intent(in)                   :: ix1, ix2, jy1, jy2
+   real, dimension(:, :, :), intent(in)    :: rhoc, visc, normx, normy, mflux
+   real                                  :: ru1, dt
+   real, dimension(MDIM),intent(in) :: del
+   integer, dimension(MDIM), intent(in) :: lo,hi
 
    real :: aicc, aixr, aixl, aiyr, aiyl
    real :: dsdxp, dsdxm, dsdyp, dsdym
@@ -31,30 +33,30 @@ subroutine mph_evapVelForcing2d(uni, vni, rhox, rhoy, visc, normx, normy, mflux,
    integer :: i, j
    integer, parameter :: kz1 = 1
 
-   dx1 = 1./dx
-   dy1 = 1./dy
+   dx1 = 1./del(IAXIS)
+   dy1 = 1./del(JAXIS)
 
    !------U-COMPONENT--------
-   do j = jy1, jy2
-      do i = ix1, ix2 + 1
+   do j = lo(JAXIS), hi(JAXIS)
+      do i = lo(IAXIS), hi(IAXIS) + 1
 
-         aicc = rhox(i, j, kz1)* &
+         aicc = 0.5*(rhoc(i, j, kz1) + rhoc(i - 1, j, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i - 1, j, kz1))* &
                 0.5*(normx(i, j, kz1) + normx(i - 1, j, kz1))
 
-         aixr = rhox(i + 1, j, kz1)* &
+         aixr = 0.5*(rhoc(i, j, kz1) + rhoc(i + 1, j, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i - 1, j, kz1))* &
                 0.5*(normx(i, j, kz1) + normx(i - 1, j, kz1))
 
-         aixl = rhox(i - 1, j, kz1)* &
+         aixl = 0.5*(rhoc(i - 1, j, kz1) + rhoc(i - 2, j, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i - 1, j, kz1))* &
                 0.5*(normx(i, j, kz1) + normx(i - 1, j, kz1))
 
-         aiyr = rhox(i, j + 1, kz1)* &
+         aiyr = 0.5*(rhoc(i, j + 1, kz1) + rhoc(i - 1, j + 1, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i - 1, j, kz1))* &
                 0.5*(normx(i, j, kz1) + normx(i - 1, j, kz1))
 
-         aiyl = rhox(i, j - 1, kz1)* &
+         aiyl = 0.5*(rhoc(i, j - 1, kz1) + rhoc(i - 1, j - 1, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i - 1, j, kz1))* &
                 0.5*(normx(i, j, kz1) + normx(i - 1, j, kz1))
 
@@ -79,26 +81,26 @@ subroutine mph_evapVelForcing2d(uni, vni, rhox, rhoy, visc, normx, normy, mflux,
    end do
 
    !++++++++++  V-COMPONENT  ++++++++++
-   do j = jy1, jy2 + 1
-      do i = ix1, ix2
+   do j = lo(JAXIS), hi(JAXIS) + 1
+      do i = lo(IAXIS), hi(IAXIS)
 
-         aicc = rhoy(i, j, kz1)* &
+         aicc = 0.5*(rhoc(i, j, kz1) + rhoc(i, j - 1, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i, j - 1, kz1))* &
                 0.5*(normy(i, j, kz1) + normy(i, j - 1, kz1))
 
-         aixr = rhoy(i + 1, j, kz1)* &
+         aixr = 0.5*(rhoc(i + 1, j, kz1) + rhoc(i + 1, j - 1, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i, j - 1, kz1))* &
                 0.5*(normy(i, j, kz1) + normy(i, j - 1, kz1))
 
-         aixl = rhoy(i - 1, j, kz1)* &
+         aixl = 0.5*(rhoc(i - 1, j, kz1) + rhoc(i - 1, j - 1, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i, j - 1, kz1))* &
                 0.5*(normy(i, j, kz1) + normy(i, j - 1, kz1))
 
-         aiyr = rhoy(i, j + 1, kz1)* &
+         aiyr = 0.5*(rhoc(i, j + 1, kz1) + rhoc(i, j, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i, j - 1, kz1))* &
                 0.5*(normy(i, j, kz1) + normy(i, j - 1, kz1))
 
-         aiyl = rhoy(i, j - 1, kz1)* &
+         aiyl = 0.5*(rhoc(i, j - 1, kz1) + rhoc(i, j - 2, kz1))* &
                 0.5*(mflux(i, j, kz1) + mflux(i, j - 1, kz1))* &
                 0.5*(normy(i, j, kz1) + normy(i, j - 1, kz1))
 

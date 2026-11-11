@@ -66,8 +66,10 @@ subroutine Driver_initAll()
   use Gravity_interface, ONLY : Gravity_init, &
     Gravity_potential
   use Timers_interface, ONLY : Timers_init, Timers_start, Timers_stop
+  use TimeAdvance_interface, ONLY : TimeAdvance_init
 
   use Grid_interface, ONLY : Grid_init, Grid_initDomain
+  use Orchestration_interface, ONLY : Orchestration_init
 
 #include "Simulation.h"
   use Multispecies_interface, ONLY : Multispecies_init
@@ -83,6 +85,12 @@ subroutine Driver_initAll()
   use Multiphase_interface, ONLY: Multiphase_init
   use HeatAD_interface, ONLY: HeatAD_init
   use ImBound_interface, ONLY: ImBound_init
+  use Spacetime_interface, ONLY: Spacetime_init
+  use Heater_interface, ONLY: Heater_init
+  use Inlet_interface, ONLY: Inlet_init
+  use Outlet_interface, ONLY: Outlet_init
+  use Stencils_interface, ONLY: Stencils_init
+
   implicit none
 
 #include "constants.h"
@@ -113,7 +121,6 @@ subroutine Driver_initAll()
   !! uses MPI_WTime(), so Driver_initParallel() must go first, and
   !! uses RuntimeParameters_get(), so RuntimeParameters_init() must go
   !! first.
-  call Profiler_init()
   call Timers_init(dr_initialWCTime)
   call Timers_start("initialization")
 
@@ -130,6 +137,10 @@ subroutine Driver_initAll()
 
   call Logfile_init()
   call Grid_init()
+  call Profiler_init()
+
+  ! Must initialize Grid first
+  call Orchestration_init()
 
 !!  call Driver_initMaterialProperties()
   if(dr_globalMe==MASTER_PE)print*,'MaterialProperties initialized'
@@ -141,6 +152,14 @@ subroutine Driver_initAll()
 #ifdef DEBUG_DRIVER
   if(dr_globalMe==MASTER_PE)print*,'Particles initialized'
 #endif
+
+  call TimeAdvance_init()
+
+  ! Heater source term
+  call Heater_init()
+
+  ! ImBound unit initialization
+  call ImBound_init(dr_restart)
 
   if(.not. dr_restart) then
 
@@ -179,14 +198,13 @@ subroutine Driver_initAll()
 
   end if
 
-
   !Hydro_init must go before Driver
   if(dr_globalMe==MASTER_PE) print *, 'Ready to call Hydro_init'
   call Hydro_init()           ! Hydrodynamics, MHD, RHD
   if(dr_globalMe==MASTER_PE)print*,'Hydro initialized'
 
-  ! ImBound unit initialization
-  call ImBound_init(dr_restart)
+  ! Stencils unit initialization
+  call Stencils_init()
 
   ! Multiphase unit must go before INS
   call Multiphase_init(dr_restart)
@@ -196,6 +214,15 @@ subroutine Driver_initAll()
 
   ! Heat advection diffusion unit 
   call HeatAD_init(dr_restart)
+
+  ! Inlet source term
+  call Inlet_init()
+
+  ! Outlet source term
+  call Outlet_init()
+
+  ! Dynamic spacetime solver unit
+  call Spacetime_init()
   
   call Gravity_init()         ! Gravity
   if(dr_globalMe==MASTER_PE)print*,'Gravity initialized'

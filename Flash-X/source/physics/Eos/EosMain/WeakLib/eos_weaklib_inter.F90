@@ -1,33 +1,30 @@
-!!****if* source/physics/Eos/EosMain/WeakLib/eos_weaklib_inter
-!! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!> @copyright Copyright 2023 UChicago Argonne, LLC and contributors
 !!
-!!  Licensed under the Apache License, Version 2.0 (the "License");
-!!  you may not use this file except in compliance with the License.
+!! @licenseblock
+!!   Licensed under the Apache License, Version 2.0 (the "License");
+!!   you may not use this file except in compliance with the License.
 !!
-!!  Unless required by applicable law or agreed to in writing, software
-!!  distributed under the License is distributed on an "AS IS" BASIS,
-!!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!!  See the License for the specific language governing permissions and
-!!  limitations under the License.
+!!   Unless required by applicable law or agreed to in writing, software
+!!   distributed under the License is distributed on an "AS IS" BASIS,
+!!   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!!   See the License for the specific language governing permissions and
+!!   limitations under the License.
+!! @endlicenseblock
+!!
+!! @file
+!> @ingroup physics_Eos
+!!
+!! @brief   Interpolation module.
+!!   eos_weaklib_short: calls WeakLib interpolate routine
+!!   and interpolate for given density, temperature, and
+!!   electron fraction.
 !!
 !! AUTHOR & DATE
 !!   R. Chu, Dept. Phys. & Astronomy
 !!   U. Tennesee, Knoxville
 !!   10/17/2018
-!!
-!! DESCRIPTION
-!!
-!!   Interpolation module.
-!!   eos_weaklib_short: calls WeakLib interpolate routine
-!!   and interpolate for given density, temperature, and
-!!   electron fraction.
-!!
-!! ARGUMENTS
-!!
-!! NOTES
-!!
-!!***
+
+
 MODULE eos_weaklib_inter
 
   USE eos_wlData, ONLY: EosNewTable, nVariables
@@ -94,7 +91,7 @@ CONTAINS
                 xDens(ii), xEner(ii), xYe(ii), xTemp(ii), error_flag(ii)
             END IF
           END DO
-          STOP
+          CALL Driver_abort('ComputeTemperatureWith_DEY ERROR')
         END IF
 
       CASE( 2 ) ! MODE_DENS_ENTR
@@ -119,7 +116,7 @@ CONTAINS
                 xDens(ii), xEntr(ii), xYe(ii), xTemp(ii), error_flag(ii)
             END IF
           END DO
-          STOP
+          CALL Driver_abort('ComputeTemperatureWith_DSY ERROR')
         END IF
 
       CASE( 4 ) ! MODE_DENS_PRES
@@ -144,7 +141,7 @@ CONTAINS
                 xDens(ii), xPres(ii), xYe(ii), xTemp(ii), error_flag(ii)
             END IF
           END DO
-          STOP
+          CALL Driver_abort('ComputeTemperatureWith_DPY ERROR')
         END IF
 
      END SELECT

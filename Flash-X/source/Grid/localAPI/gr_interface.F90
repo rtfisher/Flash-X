@@ -147,12 +147,13 @@ module gr_interface
   end interface
 
   interface
-     subroutine gr_makeMaskConsistent_gen(gridDataStruct,eosMode,needEos,gcell_on_cc)
+     subroutine gr_makeMaskConsistent_gen(gridDataStruct,eosMode,needEos,gcell_on_cc,convertToConsvd)
        implicit none
        integer,intent(IN) :: gridDataStruct
        integer,intent(IN) :: eosMode
        logical,intent(INOUT) :: needEos
        logical,intent(INOUT) :: gcell_on_cc(NUNK_VARS)
+       logical,intent(IN),OPTIONAL :: convertToConsvd
      end subroutine gr_makeMaskConsistent_gen
   end interface
 
@@ -297,6 +298,13 @@ module gr_interface
                                           regionSize(THIRD_DIR),  &
                                           1:MDIM)
     end subroutine gr_getRegionDataCoordinates
+  end interface
+
+  interface
+     subroutine gr_enforceMaxRefine(lrefineUserMax)
+        implicit none
+        integer, intent(in) :: lrefineUserMax
+     end subroutine gr_enforceMaxRefine
   end interface
 
 end module gr_interface

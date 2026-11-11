@@ -1,26 +1,24 @@
-!!****if* source/physics/Hydro/HydroMain/Spark/Hydro_computeDt
-!! NOTICE
-!!  Copyright 2022 UChicago Argonne, LLC and contributors
+!> @copyright Copyright 2023 UChicago Argonne, LLC and contributors
 !!
-!!  Licensed under the Apache License, Version 2.0 (the "License");
-!!  you may not use this file except in compliance with the License.
+!! @licenseblock
+!!   Licensed under the Apache License, Version 2.0 (the "License");
+!!   you may not use this file except in compliance with the License.
 !!
-!!  Unless required by applicable law or agreed to in writing, software
-!!  distributed under the License is distributed on an "AS IS" BASIS,
-!!  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-!!  See the License for the specific language governing permissions and
-!!  limitations under the License.
+!!   Unless required by applicable law or agreed to in writing, software
+!!   distributed under the License is distributed on an "AS IS" BASIS,
+!!   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+!!   See the License for the specific language governing permissions and
+!!   limitations under the License.
+!! @endlicenseblock
 !!
-!! NAME
+!! @file
+
+!> @ingroup HydroSpark
 !!
-!!  Hydro_computeDt
+!! @brief Computes the timestep limiter using Courant-Fredrichs-Lewy criterion
 !!
-!! DESCRIPTION
-!!
-!!  This routine computes the timestep limiter for the Spark Hydro solver.
-!!   For more details see the documentation of the NULL implementation
-!!
-!!***
+!! @stubref{Hydro_computeDt}
+!<
 
 !!REORDER(4): U
 
@@ -36,8 +34,9 @@ Subroutine Hydro_computeDt( blockDesc,       &!blockID
 #include "Simulation.h"
 #include "constants.h"
 
-  use Hydro_data, ONLY : hy_cfl, hy_geometry, hy_hydroComputeDtFirstCall, hy_lChyp, &
-       hy_meshMe, hy_updateHydroFluxes, hy_useHydro
+  use Hydro_data, ONLY : hy_geometry, hy_lChyp
+  use Hydro_data, ONLY :  hy_cfl,hy_meshMe, hy_useHydro, hy_hydroComputeDtFirstCall, &
+       hy_updateHydroFluxes
   !use Grid_interface, ONLY : Grid_getBlkBC !why was this in here?
   use Driver_interface, ONLY : Driver_abort
   use Grid_tile, ONLY : Grid_tile_t 
@@ -108,6 +107,8 @@ Subroutine Hydro_computeDt( blockDesc,       &!blockID
            elseif (hy_geometry == SPHERICAL) then
 #if NDIM > 1
               delyinv = 1.0/(x(i)*dy(j))           ! y is theta
+#endif
+#if NDIM > 2
               delzinv = 1.0/(x(i)*sin(y(j))*dz(k)) ! z is phi
 #endif
            endif
