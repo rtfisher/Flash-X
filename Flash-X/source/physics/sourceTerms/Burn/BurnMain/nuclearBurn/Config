@@ -5,13 +5,23 @@ REQUIRES Simulation/SimulationComposition
 
 EXCLUSIVE Aprox13 Aprox19 Iso7 XNet
 
-USESETUPVARS xnet
+USESETUPVARS xnet, Gift
 IF xnet
    DEFAULT XNet
 ELSE
    DEFAULT Aprox13
-   LIBRARY MA28
    REQUIRES physics/sourceTerms/Burn/BurnIntegrate
+ENDIF
+
+# MA28 is Harwell (HSL) code that Flash-X does not distribute; lib/ma28 holds
+# only a TYPE EXTERNAL declaration.  Setting the setup variable Gift=True
+# substitutes abort stubs for the three MA28 entry points, so the GIFT solver
+# (runtime parameter algebra=2) can be used with no MA28 library present.
+IF not xnet and not Gift
+   LIBRARY MA28
+ENDIF
+IF not xnet and Gift
+   REQUIRES physics/sourceTerms/Burn/BurnIntegrate/Ma28Stub
 ENDIF
 
 D algebra      choice of linear algebra package &

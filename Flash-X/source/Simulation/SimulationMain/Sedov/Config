@@ -66,6 +66,10 @@ PARAMETER sim_profFileName        STRING  "sedovSolution.dat"
 DATAFILES sedovSolution.dat
 DATAFILES sedovSolutionMod*.dat
 
+# Workshop analysis scripts (LAUNCH 2026): staged into the object directory
+# so students can run them next to their output.
+DATAFILES analysis
+
 D sim_bcSetBdryVar Whether to set the "bdry" variable in unk (if it exists) to 1
 D & in guard cells at reflecting boundaries. Doing this will entice Hydro
 D & implementations to lower reconstruction order in adjacent cells, and possibly

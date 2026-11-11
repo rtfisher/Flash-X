@@ -4,6 +4,10 @@
 REQUIRES Driver
 REQUIRES physics/Hydro
 
+# Workshop analysis scripts (LAUNCH 2026): staged into the object directory
+# so students can run them next to their output.
+DATAFILES analysis
+
 USESETUPVARS ThreeT
 
 IF ThreeT
